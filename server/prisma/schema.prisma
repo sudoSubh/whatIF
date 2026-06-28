@@ -41,6 +41,7 @@ model User {
 
   decisions    Decision[]
   feedback     Feedback[]
+  realityLogs  RealityLog[]
 
   @@index([isGuest, createdAt])
 }
@@ -92,6 +93,7 @@ model Timeline {
   createdAt   DateTime @default(now())
   
   events      TimelineEvent[]
+  realityLogs RealityLog[]
 
   // Performance: Index for decision's timelines
   @@index([decisionId])
@@ -108,6 +110,7 @@ model TimelineEvent {
   impact      String   // positive, neutral, negative
   
   createdAt   DateTime @default(now())
+  realityLogs RealityLog[]
 }
 
 model Feedback {
@@ -123,3 +126,22 @@ model Feedback {
   
   createdAt  DateTime @default(now())
 }
+
+model RealityLog {
+  id                String        @id @default(cuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timelineId        String
+  timeline          Timeline      @relation(fields: [timelineId], references: [id], onDelete: Cascade)
+  eventId           String
+  event             TimelineEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  year              Int
+  actualOutcome     String
+  predictionMatched String        // "matched" | "unmatched" | "partial" (representing ✓, ✗, ⚠️)
+  loggedAt          DateTime      @default(now())
+
+  @@index([userId])
+  @@index([timelineId])
+  @@index([eventId])
+}
+

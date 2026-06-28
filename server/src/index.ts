@@ -11,6 +11,7 @@ import { userRouter } from './routes/user.routes.js';
 import { decisionRouter } from './routes/decision.routes.js';
 import { timelineRouter } from './routes/timeline.routes.js';
 import { feedbackRouter } from './routes/feedback.routes.js';
+import { realityRouter } from './routes/reality.routes.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
 const app = express();
@@ -113,6 +114,7 @@ app.use('/api/v1/user', userRouter);
 app.use('/api/v1/decisions', decisionRouter);
 app.use('/api/v1/timelines', timelineRouter);
 app.use('/api/v1/feedback', feedbackRouter);
+app.use('/api/v1/reality', realityRouter);
 
 // 404 catch-all (before the error handler)
 app.use((_req: Request, res: Response, _next: NextFunction) => {

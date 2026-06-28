@@ -132,6 +132,39 @@ class ApiClient {
             body: JSON.stringify({ decisionId, outcome, accuracy, notes }),
         });
     }
+
+    // Reality logs by Antigravity
+    async logReality(
+        timelineId: string,
+        eventId: string,
+        actualOutcome: string,
+        predictionMatched: 'matched' | 'unmatched' | 'partial'
+    ): Promise<ApiResponse<any>> {
+        return this.request('/reality/log', {
+            method: 'POST',
+            body: JSON.stringify({ timelineId, eventId, actualOutcome, predictionMatched }),
+        });
+    }
+
+    async getAccuracyDashboard(): Promise<ApiResponse<{
+        totalEventsLogged: number;
+        accuracyRate: number;
+        confidence: number;
+        breakdown: Record<string, number>;
+    }>> {
+        return this.request('/reality/accuracy');
+    }
+
+    async correctTimeline(
+        timelineId: string,
+        eventId: string,
+        actualOutcome: string
+    ): Promise<ApiResponse<Timeline>> {
+        return this.request('/reality/correct', {
+            method: 'POST',
+            body: JSON.stringify({ timelineId, eventId, actualOutcome }),
+        });
+    }
 }
 
 export const api = new ApiClient();

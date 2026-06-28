@@ -22,6 +22,17 @@ export interface TimelineEvent {
     impact: 'positive' | 'neutral' | 'negative';
 }
 
+export interface RealityLog {
+    id: string;
+    userId: string;
+    timelineId: string;
+    eventId: string;
+    year: number;
+    actualOutcome: string;
+    predictionMatched: 'matched' | 'unmatched' | 'partial';
+    loggedAt: string;
+}
+
 export interface Timeline {
     id: string;
     decisionId: string;
@@ -32,6 +43,7 @@ export interface Timeline {
     tradeoffs: string[];
     secondOrderEffects: string[];
     events: TimelineEvent[];
+    realityLogs?: RealityLog[];
     createdAt: string;
 }
 

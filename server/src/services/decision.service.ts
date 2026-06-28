@@ -94,7 +94,10 @@ export async function getDecisionById(decisionId: string, userId: string) {
         where: { id: decisionId, userId },
         include: {
             timelines: {
-                include: { events: { orderBy: { order: 'asc' } } }
+                include: {
+                    events: { orderBy: { order: 'asc' } },
+                    realityLogs: true
+                }
             },
             childDecisions: {
                 select: {

@@ -16,6 +16,7 @@ timelineRouter.get('/:id', async (req: AuthRequest, res: Response, next: NextFun
             where: { id: req.params.id as string },
             include: {
                 events: { orderBy: { order: 'asc' } },
+                realityLogs: true,
                 decision: {
                     select: { id: true, content: true, userId: true }
                 }

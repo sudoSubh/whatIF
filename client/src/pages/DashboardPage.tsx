@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDecisionStore } from '../stores/decisionStore';
 import { useAuthStore } from '../stores/authStore';
 import { useSound } from '../context/SoundContext';
+import AccuracyDashboard from '../components/timeline/AccuracyDashboard';
 import styles from './DashboardPage.module.css';
 
 const CATEGORIES = ['Career', 'Finance', 'Relationships', 'Health', 'Education', 'Lifestyle', 'Other'];
@@ -99,6 +100,9 @@ export default function DashboardPage() {
                 <h1>Welcome{user?.name ? `, ${user.name}` : ''} <span className={styles.emoji}>👋</span></h1>
                 <p>What decision are you contemplating today?</p>
             </section>
+
+            {/* Accuracy Dashboard */}
+            <AccuracyDashboard />
 
             {/* Decision Input */}
             <section className={styles.inputSection}>
