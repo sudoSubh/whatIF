@@ -6,6 +6,23 @@ export interface TimelineMetric {
     trend: 'up' | 'stable' | 'down';
 }
 
+export type PreferredModel =
+    | 'gemini-3-pro-preview'
+    | 'gemini-3-flash-preview'
+    | 'gemini-2.5-flash';
+
+export interface DecisionContext {
+    timeHorizon?: string;
+    deadline?: string;
+    budgetRange?: string;
+    currentStability?: string;
+    biggestFear?: string;
+    bestCaseGoal?: string;
+    peopleImpacted?: string;
+    hardConstraints?: string;
+    successLooksLike?: string;
+}
+
 export interface TimelineMetrics {
     emotional: TimelineMetric;
     financial: TimelineMetric;
@@ -64,7 +81,7 @@ export interface Decision {
     userId: string;
     content: string;
     category?: string;
-    context?: Record<string, unknown>;
+    context?: DecisionContext | Record<string, unknown>;
     createdAt: string;
     timelines?: Timeline[];
     branches?: DecisionBranchSummary[];

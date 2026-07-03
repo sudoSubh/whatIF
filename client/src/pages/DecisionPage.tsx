@@ -2,9 +2,10 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDecisionStore } from '../stores/decisionStore';
 import { useSound } from '../context/SoundContext';
+import { getPreferredModel } from '../lib/modelPreference';
 import TimelineCard from '../components/timeline/TimelineCard';
 import TimelineComparison from '../components/timeline/TimelineComparison';
-import type { Timeline } from '../types';
+import type { DecisionContext, Timeline } from '../types';
 import styles from './DecisionPage.module.css';
 
 const RETHINKING_MESSAGES = [
@@ -106,7 +107,7 @@ export default function DecisionPage() {
         playSound('send');
 
         try {
-            const result = await injectDecision(id, selectedForInject, newDecision.trim());
+            const result = await injectDecision(id, selectedForInject, newDecision.trim(), getPreferredModel());
             navigate(`/decision/${result.decision.id}`);
         } catch {
             // Error is exposed via the store; intentionally swallow here.
@@ -128,6 +129,10 @@ export default function DecisionPage() {
             .map(id => currentDecision.timelines!.find(t => t.id === id))
             .filter((t): t is Timeline => t !== undefined);
     };
+
+    const contextEntries = Object.entries((currentDecision?.context ?? {}) as DecisionContext).filter(([, value]) =>
+        typeof value === 'string' ? value.trim().length > 0 : Boolean(value)
+    );
 
     if (isLoading) {
         return (
@@ -188,6 +193,30 @@ export default function DecisionPage() {
                     <h1>{currentDecision.content}</h1>
                 </div>
             </header>
+
+            {contextEntries.length > 0 && (
+                <section className={styles.briefPanel}>
+                    <div className={styles.briefPanelHeader}>
+                        <div>
+                            <span className={styles.briefEyebrow}>Simulation Brief</span>
+                            <h2>Decision framing</h2>
+                        </div>
+                        <span className={styles.modelBadge}>
+                            Model: {getPreferredModel().includes('pro') ? 'Gemini 3 Pro' : getPreferredModel().includes('3-flash') ? 'Gemini 3 Flash' : 'Gemini 2.5 Flash'}
+                        </span>
+                    </div>
+                    <div className={styles.briefGrid}>
+                        {contextEntries.map(([key, value]) => (
+                            <div key={key} className={styles.briefCard}>
+                                <span className={styles.briefLabel}>
+                                    {key.replace(/([a-z])([A-Z])/g, '$1 $2')}
+                                </span>
+                                <p>{String(value)}</p>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {currentDecision.branches && currentDecision.branches.length > 0 && (
                 <section

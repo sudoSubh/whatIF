@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import api from '../services/api';
-import type { Decision, Timeline } from '../types';
+import type { Decision, DecisionContext, PreferredModel, Timeline } from '../types';
 
 interface DecisionState {
     decisions: Decision[];
@@ -12,8 +12,18 @@ interface DecisionState {
     // Actions
     fetchDecisions: () => Promise<void>;
     fetchDecision: (id: string) => Promise<void>;
-    createDecision: (content: string, category?: string) => Promise<{ decision: Decision; timelines: Timeline[] }>;
-    injectDecision: (decisionId: string, timelineId: string, newDecision: string) => Promise<{ decision: Decision; timelines: Timeline[] }>;
+    createDecision: (
+        content: string,
+        category?: string,
+        context?: DecisionContext,
+        preferredModel?: PreferredModel
+    ) => Promise<{ decision: Decision; timelines: Timeline[] }>;
+    injectDecision: (
+        decisionId: string,
+        timelineId: string,
+        newDecision: string,
+        preferredModel?: PreferredModel
+    ) => Promise<{ decision: Decision; timelines: Timeline[] }>;
     setCurrentDecision: (decision: Decision | null) => void;
     clearError: () => void;
 }
@@ -55,10 +65,10 @@ export const useDecisionStore = create<DecisionState>((set) => ({
         }
     },
 
-    createDecision: async (content, category) => {
+    createDecision: async (content, category, context, preferredModel) => {
         set({ isGenerating: true, error: null });
         try {
-            const response = await api.createDecision(content, category);
+            const response = await api.createDecision(content, category, context, preferredModel);
             if (response.data) {
                 set(state => ({
                     decisions: [response.data!.decision, ...state.decisions],
@@ -80,10 +90,10 @@ export const useDecisionStore = create<DecisionState>((set) => ({
         }
     },
 
-    injectDecision: async (decisionId, timelineId, newDecision) => {
+    injectDecision: async (decisionId, timelineId, newDecision, preferredModel) => {
         set({ isGenerating: true, error: null });
         try {
-            const response = await api.injectDecision(decisionId, timelineId, newDecision);
+            const response = await api.injectDecision(decisionId, timelineId, newDecision, preferredModel);
             if (response.data) {
                 // Add new decision to list by prateek
                 set(state => ({

@@ -1,4 +1,12 @@
-import type { ApiResponse, AuthResponse, User, Decision, Timeline } from '../types';
+import type {
+    ApiResponse,
+    AuthResponse,
+    Decision,
+    DecisionContext,
+    PreferredModel,
+    Timeline,
+    User
+} from '../types';
 
 export const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
@@ -46,6 +54,13 @@ class ApiClient {
         const data = await response.json();
 
         if (!response.ok) {
+            if (response.status === 401 && this.token) {
+                this.setToken(null);
+                localStorage.removeItem('whatif_guest_token');
+                import('../stores/authStore')
+                    .then((m) => m.useAuthStore.getState().logout())
+                    .catch((err) => console.error('Failed to logout on 401:', err));
+            }
             throw new Error(data.message || 'Something went wrong');
         }
 
@@ -98,10 +113,15 @@ class ApiClient {
     }
 
     // Decisions by prateek
-    async createDecision(content: string, category?: string): Promise<ApiResponse<{ decision: Decision; timelines: Timeline[] }>> {
+    async createDecision(
+        content: string,
+        category?: string,
+        context?: DecisionContext,
+        preferredModel?: PreferredModel
+    ): Promise<ApiResponse<{ decision: Decision; timelines: Timeline[] }>> {
         return this.request('/decisions', {
             method: 'POST',
-            body: JSON.stringify({ content, category }),
+            body: JSON.stringify({ content, category, context, preferredModel }),
         });
     }
 
@@ -113,10 +133,15 @@ class ApiClient {
         return this.request(`/decisions/${id}`);
     }
 
-    async injectDecision(decisionId: string, timelineId: string, newDecision: string): Promise<ApiResponse<{ decision: Decision; timelines: Timeline[] }>> {
+    async injectDecision(
+        decisionId: string,
+        timelineId: string,
+        newDecision: string,
+        preferredModel?: PreferredModel
+    ): Promise<ApiResponse<{ decision: Decision; timelines: Timeline[] }>> {
         return this.request(`/decisions/${decisionId}/inject`, {
             method: 'POST',
-            body: JSON.stringify({ timelineId, newDecision }),
+            body: JSON.stringify({ timelineId, newDecision, preferredModel }),
         });
     }
 

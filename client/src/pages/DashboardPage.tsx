@@ -3,10 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useDecisionStore } from '../stores/decisionStore';
 import { useAuthStore } from '../stores/authStore';
 import { useSound } from '../context/SoundContext';
+import { getPreferredModel } from '../lib/modelPreference';
 import AccuracyDashboard from '../components/timeline/AccuracyDashboard';
+import type { DecisionContext } from '../types';
 import styles from './DashboardPage.module.css';
 
 const CATEGORIES = ['Career', 'Finance', 'Relationships', 'Health', 'Education', 'Lifestyle', 'Other'];
+const TIME_HORIZONS = ['6 months', '1 year', '2 years', '5 years', '10 years'];
+const STABILITY_OPTIONS = ['Very stable', 'Mostly stable', 'In transition', 'High uncertainty'];
 
 const THINKING_MESSAGES = [
     '🔮 Analyzing your decision...',
@@ -55,7 +59,19 @@ function ThinkingIndicator() {
 export default function DashboardPage() {
     const [decision, setDecision] = useState('');
     const [category, setCategory] = useState('');
+    const [showAdvanced, setShowAdvanced] = useState(false);
     const [hideTips, setHideTips] = useState(false);
+    const [context, setContext] = useState<DecisionContext>({
+        timeHorizon: '2 years',
+        deadline: '',
+        budgetRange: '',
+        currentStability: '',
+        biggestFear: '',
+        bestCaseGoal: '',
+        peopleImpacted: '',
+        hardConstraints: '',
+        successLooksLike: '',
+    });
     const { isGenerating, error, createDecision, setCurrentDecision } = useDecisionStore();
     const { user } = useAuthStore();
     const { playSound } = useSound();
@@ -65,6 +81,16 @@ export default function DashboardPage() {
     useEffect(() => {
         setCurrentDecision(null);
     }, [setCurrentDecision]);
+
+    const updateContext = (key: keyof DecisionContext, value: string) => {
+        setContext((prev) => ({ ...prev, [key]: value }));
+    };
+
+    const normalizedContext = Object.fromEntries(
+        Object.entries(context).filter(([, value]) => typeof value === 'string' && value.trim().length > 0)
+    ) as DecisionContext;
+
+    const contextSignals = Object.values(normalizedContext).length;
 
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -77,7 +103,12 @@ export default function DashboardPage() {
         setHideTips(true);
 
         try {
-            const result = await createDecision(decision.trim(), category || undefined);
+            const result = await createDecision(
+                decision.trim(),
+                category || undefined,
+                normalizedContext,
+                getPreferredModel()
+            );
             navigate(`/decision/${result.decision.id}`);
         } catch {
             // Error handled by store
@@ -108,6 +139,23 @@ export default function DashboardPage() {
             <section className={styles.inputSection}>
                 <form onSubmit={handleSubmit} className={styles.form}>
                     <div className={styles.inputWrapper}>
+                        <div className={styles.briefHeader}>
+                            <div>
+                                <span className={styles.briefEyebrow}>Decision Brief</span>
+                                <h2>Build a smarter simulation</h2>
+                            </div>
+                            <button
+                                type="button"
+                                className={styles.advancedToggle}
+                                onClick={() => {
+                                    playSound('click');
+                                    setShowAdvanced((prev) => !prev);
+                                }}
+                            >
+                                {showAdvanced ? 'Hide brief fields' : 'Add more context'}
+                            </button>
+                        </div>
+
                         <textarea
                             className={`input textarea ${styles.decisionInput}`}
                             placeholder="Describe your decision... e.g., 'Should I quit my job to start a startup?' or 'Should I move to a new city for a relationship?'"
@@ -117,6 +165,129 @@ export default function DashboardPage() {
                             disabled={isGenerating}
                             rows={4}
                         />
+
+                        <div className={styles.contextSummary}>
+                            <span className={styles.contextPill}>
+                                Model: {getPreferredModel().includes('pro') ? 'Deep reasoning' : getPreferredModel().includes('3-flash') ? 'Balanced speed' : 'Stable fast'}
+                            </span>
+                            <span className={styles.contextPill}>
+                                Brief signals: {contextSignals}
+                            </span>
+                            {context.timeHorizon && (
+                                <span className={styles.contextPill}>Horizon: {context.timeHorizon}</span>
+                            )}
+                        </div>
+
+                        {showAdvanced && (
+                            <div className={styles.advancedGrid}>
+                                <label className={styles.contextField}>
+                                    <span>Time horizon</span>
+                                    <select
+                                        className={`input ${styles.contextSelect}`}
+                                        value={context.timeHorizon || ''}
+                                        onChange={(e) => updateContext('timeHorizon', e.target.value)}
+                                        disabled={isGenerating}
+                                    >
+                                        {TIME_HORIZONS.map((option) => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                <label className={styles.contextField}>
+                                    <span>Decision deadline</span>
+                                    <input
+                                        className="input"
+                                        value={context.deadline || ''}
+                                        onChange={(e) => updateContext('deadline', e.target.value)}
+                                        placeholder="e.g. Need to decide by August"
+                                        disabled={isGenerating}
+                                    />
+                                </label>
+
+                                <label className={styles.contextField}>
+                                    <span>Budget / resources</span>
+                                    <input
+                                        className="input"
+                                        value={context.budgetRange || ''}
+                                        onChange={(e) => updateContext('budgetRange', e.target.value)}
+                                        placeholder="e.g. 6 months savings, limited runway"
+                                        disabled={isGenerating}
+                                    />
+                                </label>
+
+                                <label className={styles.contextField}>
+                                    <span>Current stability</span>
+                                    <select
+                                        className={`input ${styles.contextSelect}`}
+                                        value={context.currentStability || ''}
+                                        onChange={(e) => updateContext('currentStability', e.target.value)}
+                                        disabled={isGenerating}
+                                    >
+                                        <option value="">Select stability level</option>
+                                        {STABILITY_OPTIONS.map((option) => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                    </select>
+                                </label>
+
+                                <label className={`${styles.contextField} ${styles.contextFieldWide}`}>
+                                    <span>Best-case goal</span>
+                                    <input
+                                        className="input"
+                                        value={context.bestCaseGoal || ''}
+                                        onChange={(e) => updateContext('bestCaseGoal', e.target.value)}
+                                        placeholder="What would make this decision feel like a huge win?"
+                                        disabled={isGenerating}
+                                    />
+                                </label>
+
+                                <label className={`${styles.contextField} ${styles.contextFieldWide}`}>
+                                    <span>Biggest fear</span>
+                                    <input
+                                        className="input"
+                                        value={context.biggestFear || ''}
+                                        onChange={(e) => updateContext('biggestFear', e.target.value)}
+                                        placeholder="What downside are you most worried about?"
+                                        disabled={isGenerating}
+                                    />
+                                </label>
+
+                                <label className={`${styles.contextField} ${styles.contextFieldWide}`}>
+                                    <span>People impacted</span>
+                                    <input
+                                        className="input"
+                                        value={context.peopleImpacted || ''}
+                                        onChange={(e) => updateContext('peopleImpacted', e.target.value)}
+                                        placeholder="Partner, co-founders, family, team, etc."
+                                        disabled={isGenerating}
+                                    />
+                                </label>
+
+                                <label className={`${styles.contextField} ${styles.contextFieldWide}`}>
+                                    <span>Hard constraints</span>
+                                    <input
+                                        className="input"
+                                        value={context.hardConstraints || ''}
+                                        onChange={(e) => updateContext('hardConstraints', e.target.value)}
+                                        placeholder="Visa limits, loans, health constraints, location, contract, etc."
+                                        disabled={isGenerating}
+                                    />
+                                </label>
+
+                                <label className={`${styles.contextField} ${styles.contextFieldWide}`}>
+                                    <span>How will you define success?</span>
+                                    <input
+                                        className="input"
+                                        value={context.successLooksLike || ''}
+                                        onChange={(e) => updateContext('successLooksLike', e.target.value)}
+                                        placeholder="e.g. 30% income growth, more freedom, healthier schedule"
+                                        disabled={isGenerating}
+                                    />
+                                </label>
+                            </div>
+                        )}
+
                         <div className={styles.inputFooter}>
                             <select
                                 className={`input ${styles.categorySelect}`}

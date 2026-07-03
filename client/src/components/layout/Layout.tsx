@@ -4,13 +4,15 @@ import { useAuthStore } from '../../stores/authStore';
 import { useDecisionStore } from '../../stores/decisionStore';
 import { useTheme } from '../../context/ThemeContext';
 import { useSound } from '../../context/SoundContext';
+import { getPreferredModel, setPreferredModel } from '../../lib/modelPreference';
+import type { PreferredModel } from '../../types';
 import styles from './Layout.module.css';
 
 interface LayoutProps {
     children: React.ReactNode;
 }
 
-const GEMINI_MODELS = [
+const GEMINI_MODELS: Array<{ id: PreferredModel; name: string; description: string }> = [
     { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', description: 'Best for complex reasoning' },
     { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', description: 'Fast & efficient' },
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Stable & reliable' },
@@ -24,7 +26,9 @@ export default function Layout({ children }: LayoutProps) {
     const navigate = useNavigate();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
-    const [selectedModel, setSelectedModel] = useState(GEMINI_MODELS[0]);
+    const [selectedModel, setSelectedModel] = useState(
+        GEMINI_MODELS.find((model) => model.id === getPreferredModel()) ?? GEMINI_MODELS[0]
+    );
 
     useEffect(() => {
         fetchDecisions();
@@ -68,7 +72,7 @@ export default function Layout({ children }: LayoutProps) {
                                                     playSound('click');
                                                     setSelectedModel(model);
                                                     setModelDropdownOpen(false);
-                                                    localStorage.setItem('preferredModel', model.id);
+                                                    setPreferredModel(model.id);
                                                 }}
                                             >
                                                 <span className={styles.modelName}>{model.name}</span>

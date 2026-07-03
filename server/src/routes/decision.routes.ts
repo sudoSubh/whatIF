@@ -12,6 +12,12 @@ import { AppError } from '../middleware/error.middleware.js';
 
 export const decisionRouter = Router();
 
+const preferredModelSchema = z.enum([
+    'gemini-3-pro-preview',
+    'gemini-3-flash-preview',
+    'gemini-2.5-flash'
+]);
+
 // All decision routes require authentication
 decisionRouter.use(authenticate);
 
@@ -32,11 +38,13 @@ const createDecisionSchema = z.object({
     content: z.string().min(10, 'Decision must be at least 10 characters'),
     category: z.string().optional(),
     context: z.record(z.unknown()).optional(),
+    preferredModel: preferredModelSchema.optional(),
 });
 
 const injectDecisionSchema = z.object({
     timelineId: z.string(),
     newDecision: z.string().min(10, 'Decision must be at least 10 characters'),
+    preferredModel: preferredModelSchema.optional(),
 });
 
 // Create a new decision and generate timelines
@@ -82,7 +90,8 @@ decisionRouter.post('/:id/inject', decisionWriteLimiter, async (req: AuthRequest
             req.params.id as string,
             data.timelineId,
             data.newDecision,
-            req.userId!
+            req.userId!,
+            data.preferredModel
         );
         res.status(201).json({ success: true, data: result });
     } catch (error) {

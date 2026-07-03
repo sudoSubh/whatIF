@@ -31,7 +31,7 @@ interface RealityState {
     clearError: () => void;
 }
 
-export const useRealityStore = create<RealityState>((set, get) => ({
+export const useRealityStore = create<RealityState>((set) => ({
     dashboardData: null,
     isLoading: false,
     isCorrecting: false,

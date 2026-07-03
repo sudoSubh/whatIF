@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import { generateTimelines, UserProfile } from './gemini.service.js';
+import { generateTimelines, UserProfile, type DecisionContextInput, type PreferredModel } from './gemini.service.js';
 import { AppError } from '../middleware/error.middleware.js';
 import { safeJsonParse } from '../lib/json.js';
 
@@ -7,6 +7,7 @@ export interface CreateDecisionInput {
     content: string;
     category?: string;
     context?: Record<string, unknown>;
+    preferredModel?: PreferredModel;
 }
 
 export async function createDecision(userId: string, input: CreateDecisionInput) {
@@ -43,7 +44,13 @@ export async function createDecision(userId: string, input: CreateDecisionInput)
     // and bias the new timelines back toward old threads. Personalisation
     // comes solely from the user profile. Branch/injected decisions still
     // carry their parent's context via `injectDecision` below.
-    const result = await generateTimelines(input.content, userProfile);
+    const result = await generateTimelines(
+        input.content,
+        userProfile,
+        undefined,
+        input.context,
+        input.preferredModel
+    );
 
     // Store timelines in database
     const storedTimelines = await Promise.all(
@@ -156,7 +163,8 @@ export async function injectDecision(
     decisionId: string,
     timelineId: string,
     newDecisionContent: string,
-    userId: string
+    userId: string,
+    preferredModel?: PreferredModel
 ) {
     // Verify ownership
     const originalDecision = await prisma.decision.findFirst({
@@ -205,7 +213,9 @@ export async function injectDecision(
     const result = await generateTimelines(
         `Following my previous decision to "${originalDecision.content}", I now want to: ${newDecisionContent}`,
         userProfile,
-        [{ content: originalDecision.content, category: originalDecision.category || undefined }]
+        [{ content: originalDecision.content, category: originalDecision.category || undefined }],
+        originalDecision.context ? safeJsonParse<DecisionContextInput | null>(originalDecision.context, null) ?? undefined : undefined,
+        preferredModel
     );
 
     // Store new timelines
