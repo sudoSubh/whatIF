@@ -1,5 +1,7 @@
 .card {
-    background: var(--color-bg-card);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015)),
+        var(--color-bg-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-2xl);
     padding: var(--space-6);
@@ -7,7 +9,7 @@
     transition: all var(--transition-base);
     position: relative;
     animation: fadeInCard 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-    backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
     box-shadow: var(--shadow-md);
     overflow: hidden;
 }
@@ -16,8 +18,10 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
-    opacity: 0;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--accent-color) 18%, transparent), transparent 34%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, transparent 100%);
+    opacity: 0.9;
     transition: opacity var(--transition-base);
     pointer-events: none;
 }
@@ -34,9 +38,9 @@
 }
 
 .card:hover {
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateY(-5px) scale(1.02);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), 0 0 20px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    border-color: color-mix(in srgb, var(--accent-color) 42%, rgba(255,255,255,0.18));
+    transform: translateY(-8px) scale(1.015);
+    box-shadow: 0 24px 50px rgba(2, 8, 20, 0.28), 0 0 26px color-mix(in srgb, var(--accent-color) 20%, transparent);
 }
 
 .card:hover::before {
@@ -45,14 +49,14 @@
 
 .card.selected {
     border-color: var(--accent-color);
-    box-shadow: 0 0 30px color-mix(in srgb, var(--accent-color) 40%, transparent), 0 10px 30px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(to bottom right, var(--color-bg-card), rgba(17, 24, 39, 0.8));
+    box-shadow: 0 0 30px color-mix(in srgb, var(--accent-color) 35%, transparent), 0 20px 45px rgba(2, 8, 20, 0.34);
+    background: linear-gradient(to bottom right, rgba(255,255,255,0.06), rgba(255,255,255,0.01)), var(--color-bg-card);
 }
 
 .header {
     margin-bottom: var(--space-5);
     padding-bottom: var(--space-5);
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .titleRow {
@@ -63,22 +67,24 @@
 }
 
 .title {
-    font-size: 1.25rem;
+    font-size: 1.32rem;
     color: var(--accent-color);
+    letter-spacing: -0.02em;
 }
 
 .probability {
-    background: var(--accent-color);
+    background: color-mix(in srgb, var(--accent-color) 88%, white 12%);
     color: white;
-    padding: var(--space-1) var(--space-3);
+    padding: 0.4rem 0.9rem;
     border-radius: var(--radius-full);
     font-size: 0.875rem;
     font-weight: 600;
+    box-shadow: 0 10px 20px color-mix(in srgb, var(--accent-color) 24%, transparent);
 }
 
 .summary {
-    font-size: 0.9375rem;
-    line-height: 1.5;
+    font-size: 0.95rem;
+    line-height: 1.62;
 }
 
 /* Metrics */
@@ -103,7 +109,7 @@
 
 .metricName {
     font-size: 0.8125rem;
-    color: var(--color-text-secondary);
+    color: var(--color-text-primary);
     text-transform: capitalize;
 }
 
@@ -125,8 +131,8 @@
 
 .metricBar {
     grid-column: 1 / 2;
-    height: 6px;
-    background: var(--color-bg-tertiary);
+    height: 8px;
+    background: rgba(148, 163, 184, 0.16);
     border-radius: var(--radius-full);
     overflow: hidden;
 }
@@ -135,6 +141,7 @@
     height: 100%;
     border-radius: var(--radius-full);
     transition: width 0.5s ease;
+    box-shadow: 0 0 16px color-mix(in srgb, var(--accent-color) 30%, transparent);
 }
 
 .metricScore {
@@ -175,7 +182,7 @@
     top: 6px;
     bottom: 6px;
     width: 2px;
-    background: var(--color-border);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--accent-color) 35%, transparent), rgba(148,163,184,0.12));
 }
 
 .event {
@@ -214,8 +221,8 @@
 }
 
 .eventDescription {
-    font-size: 0.875rem;
-    line-height: 1.4;
+    font-size: 0.89rem;
+    line-height: 1.5;
     color: var(--color-text-primary);
 }
 
@@ -272,9 +279,9 @@
 
 /* Reality Logging & Auto-correction Styles by Antigravity */
 .logRealityBtn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(148, 163, 184, 0.16);
+    color: var(--color-text-secondary);
     padding: 3px 8px;
     border-radius: 6px;
     font-size: 0.7rem;
@@ -295,8 +302,8 @@
 
 .realityForm {
     margin-top: 8px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(148, 163, 184, 0.12);
     border-radius: 8px;
     padding: 8px 12px;
     display: flex;
@@ -317,8 +324,8 @@
 }
 
 .outcomeInput {
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(148, 163, 184, 0.16);
     border-radius: 6px;
     padding: 6px 10px;
     font-size: 0.8rem;
@@ -340,9 +347,9 @@
 }
 
 .matchBtn {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    color: var(--color-text-secondary);
     padding: 6px;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -410,8 +417,8 @@
 
 .cancelBtn {
     background: rgba(255, 255, 255, 0.05);
-    color: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-secondary);
+    border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .cancelBtn:hover {
@@ -530,4 +537,4 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
-}
+}

@@ -1,12 +1,14 @@
 .dashboard {
-    background: rgba(255, 255, 255, 0.03);
+    background:
+        linear-gradient(135deg, rgba(79, 140, 255, 0.08), rgba(45, 212, 191, 0.04)),
+        rgba(255, 255, 255, 0.04);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(148, 163, 184, 0.14);
     border-radius: 20px;
     padding: 1.8rem;
     margin-bottom: 2rem;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    box-shadow: 0 24px 54px rgba(2, 8, 20, 0.24);
     color: #fff;
     display: flex;
     flex-direction: column;
@@ -25,7 +27,7 @@
     height: 200%;
     background: radial-gradient(
         circle,
-        rgba(99, 102, 241, 0.05) 0%,
+        rgba(79, 140, 255, 0.08) 0%,
         transparent 70%
     );
     pointer-events: none;
@@ -36,7 +38,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
     padding-bottom: 1rem;
     z-index: 1;
 }
@@ -45,7 +47,7 @@
     font-size: 1.4rem;
     font-weight: 700;
     margin: 0;
-    background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);
+    background: linear-gradient(135deg, #b8d4ff 0%, #5b7cff 55%, #2dd4bf 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     display: flex;
@@ -72,8 +74,8 @@
 }
 
 .card {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+    border: 1px solid rgba(148, 163, 184, 0.12);
     border-radius: 16px;
     padding: 1.5rem;
     display: flex;
@@ -84,7 +86,7 @@
 
 .card:hover {
     transform: translateY(-2px);
-    border-color: rgba(99, 102, 241, 0.2);
+    border-color: rgba(79, 140, 255, 0.24);
 }
 
 .statRow {
@@ -95,7 +97,7 @@
 
 .statLabel {
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--color-text-secondary);
     font-weight: 500;
 }
 
@@ -114,7 +116,7 @@
 
 .meterTrack {
     height: 10px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(148, 163, 184, 0.16);
     border-radius: 999px;
     overflow: hidden;
     position: relative;
@@ -122,15 +124,15 @@
 
 .meterFill {
     height: 100%;
-    background: linear-gradient(90deg, #6366f1 0%, #10b981 100%);
+    background: linear-gradient(90deg, #4f8cff 0%, #2dd4bf 100%);
     border-radius: 999px;
     transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+    box-shadow: 0 0 12px rgba(79, 140, 255, 0.34);
 }
 
 .confidenceText {
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--color-text-muted);
     line-height: 1.4;
 }
 
@@ -143,7 +145,7 @@
     font-size: 1rem;
     font-weight: 600;
     margin: 0 0 0.5rem 0;
-    color: rgba(255, 255, 255, 0.9);
+    color: var(--color-text-primary);
 }
 
 .breakdownGrid {
@@ -165,18 +167,18 @@
 }
 
 .categoryName {
-    color: rgba(255, 255, 255, 0.8);
+    color: var(--color-text-secondary);
     font-weight: 500;
 }
 
 .categoryPercentage {
-    color: #a5b4fc;
+    color: #9cc1ff;
     font-weight: 600;
 }
 
 .categoryBarTrack {
     height: 6px;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(148, 163, 184, 0.12);
     border-radius: 999px;
     overflow: hidden;
 }
@@ -189,7 +191,7 @@
 
 .emptyState {
     text-align: center;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--color-text-muted);
     font-size: 0.9rem;
     padding: 1rem;
 }

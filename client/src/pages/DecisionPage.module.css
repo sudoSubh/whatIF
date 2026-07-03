@@ -35,7 +35,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-2);
-    background: var(--color-bg-tertiary);
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     color: var(--color-text-secondary);
@@ -76,9 +76,10 @@
 .briefPanel {
     margin-bottom: var(--space-6);
     padding: var(--space-5);
-    background: var(--color-bg-card);
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)), var(--color-bg-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
 }
 
 .briefPanelHeader {
@@ -107,8 +108,8 @@
     align-items: center;
     padding: 0.4rem 0.85rem;
     border-radius: var(--radius-full);
-    background: rgba(99, 102, 241, 0.12);
-    border: 1px solid rgba(99, 102, 241, 0.24);
+    background: rgba(79, 140, 255, 0.12);
+    border: 1px solid rgba(79, 140, 255, 0.24);
     color: var(--color-text-secondary);
     font-size: 0.75rem;
     white-space: nowrap;
@@ -123,7 +124,7 @@
 .briefCard {
     padding: var(--space-4);
     border-radius: var(--radius-lg);
-    background: var(--color-bg-glass);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
     border: 1px solid var(--color-border);
 }
 
@@ -146,9 +147,10 @@
     align-items: center;
     margin-bottom: var(--space-6);
     padding: var(--space-4);
-    background: var(--color-bg-card);
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)), var(--color-bg-card);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
 }
 
 .selectionInfo {
@@ -162,12 +164,13 @@
 }
 
 .injectPanel {
-    background: var(--color-bg-card);
+    background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)), var(--color-bg-card);
     border: 1px solid var(--color-accent-primary);
     border-radius: var(--radius-xl);
     padding: var(--space-6);
     margin-bottom: var(--space-6);
     animation: slideIn 0.3s ease;
+    box-shadow: var(--shadow-md);
 }
 
 @keyframes slideIn {

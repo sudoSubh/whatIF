@@ -34,7 +34,6 @@ export default function Layout({ children }: LayoutProps) {
         fetchDecisions();
     }, [fetchDecisions]);
 
-    // Close sidebar on mobile by default
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth < 768) {
@@ -48,10 +47,8 @@ export default function Layout({ children }: LayoutProps) {
 
     return (
         <div className={styles.layout}>
-            {/* Sidebar */}
             <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarClosed}`}>
                 <div className={styles.sidebarContent}>
-                    {/* Model Dropdown (only when expanded) */}
                     {sidebarOpen && (
                         <div className={styles.modelSection}>
                             <div className={styles.modelDropdownWrapper}>
@@ -64,7 +61,7 @@ export default function Layout({ children }: LayoutProps) {
                                 </button>
                                 {modelDropdownOpen && (
                                     <div className={styles.modelDropdown}>
-                                        {GEMINI_MODELS.map(model => (
+                                        {GEMINI_MODELS.map((model) => (
                                             <button
                                                 key={model.id}
                                                 className={`${styles.modelOption} ${selectedModel.id === model.id ? styles.modelSelected : ''}`}
@@ -86,27 +83,30 @@ export default function Layout({ children }: LayoutProps) {
                         </div>
                     )}
 
-                    {/* New Decision Button by prateek*/}
                     <button
                         className={styles.newChatBtn}
-                        onClick={() => { playSound('click'); navigate('/dashboard'); }}
+                        onClick={() => {
+                            playSound('click');
+                            navigate('/dashboard');
+                        }}
                         title="New Decision"
                     >
                         {sidebarOpen ? (
                             <>
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                                    <line x1="12" y1="5" x2="12" y2="19" />
+                                    <line x1="5" y1="12" x2="19" y2="12" />
                                 </svg>
                                 New Decision
                             </>
                         ) : (
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
                             </svg>
                         )}
                     </button>
 
-                    {/* Scrollable History Section */}
                     {sidebarOpen && (
                         <div className={styles.historySection}>
                             <h3 className={styles.historyTitle}>Your Decisions</h3>
@@ -115,7 +115,10 @@ export default function Layout({ children }: LayoutProps) {
                                     <button
                                         key={d.id}
                                         className={styles.historyItem}
-                                        onClick={() => { playSound('click'); navigate(`/decision/${d.id}`); }}
+                                        onClick={() => {
+                                            playSound('click');
+                                            navigate(`/decision/${d.id}`);
+                                        }}
                                         title={d.content}
                                     >
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -132,7 +135,6 @@ export default function Layout({ children }: LayoutProps) {
                     )}
                 </div>
 
-                {/* Sidebar Footer - Profile & Logout */}
                 <div className={styles.sidebarFooter}>
                     {sidebarOpen ? (
                         <>
@@ -144,7 +146,10 @@ export default function Layout({ children }: LayoutProps) {
                                 <span className={styles.userName}>{user?.name || user?.email?.split('@')[0]}</span>
                             </Link>
                             <button
-                                onClick={() => { playSound('click'); toggleMute(); }}
+                                onClick={() => {
+                                    playSound('click');
+                                    toggleMute();
+                                }}
                                 className={styles.muteBtn}
                                 title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
                             >
@@ -162,7 +167,14 @@ export default function Layout({ children }: LayoutProps) {
                                     </svg>
                                 )}
                             </button>
-                            <button onClick={() => { playSound('click'); logout(); }} className={styles.logoutBtn} title="Logout">
+                            <button
+                                onClick={() => {
+                                    playSound('click');
+                                    logout();
+                                }}
+                                className={styles.logoutBtn}
+                                title="Logout"
+                            >
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                     <polyline points="16 17 21 12 16 7" />
@@ -179,7 +191,10 @@ export default function Layout({ children }: LayoutProps) {
                                 </svg>
                             </Link>
                             <button
-                                onClick={() => { playSound('click'); toggleMute(); }}
+                                onClick={() => {
+                                    playSound('click');
+                                    toggleMute();
+                                }}
                                 className={styles.iconBtn}
                                 title={isMuted ? 'Unmute sounds' : 'Mute sounds'}
                             >
@@ -197,7 +212,14 @@ export default function Layout({ children }: LayoutProps) {
                                     </svg>
                                 )}
                             </button>
-                            <button onClick={() => { playSound('click'); logout(); }} className={styles.iconBtn} title="Logout">
+                            <button
+                                onClick={() => {
+                                    playSound('click');
+                                    logout();
+                                }}
+                                className={styles.iconBtn}
+                                title="Logout"
+                            >
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                     <polyline points="16 17 21 12 16 7" />
@@ -208,10 +230,12 @@ export default function Layout({ children }: LayoutProps) {
                     )}
                 </div>
 
-                {/* Circular Toggle Button by prateek*/}
                 <button
                     className={styles.sidebarToggle}
-                    onClick={() => { playSound('click'); setSidebarOpen(!sidebarOpen); }}
+                    onClick={() => {
+                        playSound('click');
+                        setSidebarOpen(!sidebarOpen);
+                    }}
                     title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
                 >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -224,16 +248,16 @@ export default function Layout({ children }: LayoutProps) {
                 </button>
             </aside>
 
-            {/* Mobile Overlay */}
             {sidebarOpen && <div className={styles.mobileOverlay} onClick={() => setSidebarOpen(false)} />}
 
-            {/* Main Content */}
             <div className={styles.mainWrapper}>
                 <header className={styles.header}>
-                    {/* Mobile menu button */}
                     <button
                         className={styles.mobileMenuBtn}
-                        onClick={() => { playSound('click'); setSidebarOpen(!sidebarOpen); }}
+                        onClick={() => {
+                            playSound('click');
+                            setSidebarOpen(!sidebarOpen);
+                        }}
                     >
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <line x1="3" y1="12" x2="21" y2="12" />
@@ -242,36 +266,48 @@ export default function Layout({ children }: LayoutProps) {
                         </svg>
                     </button>
 
-                    {/* Large Readable Logo in Header */}
                     <Link to="/dashboard" className={styles.headerLogo}>
                         <img src="/icon.png" alt="WhatIF" className={styles.headerLogoImg} />
-                        {/* code by prateek <span className={styles.headerLogoText}>WhatIF</span> */}
                     </Link>
 
-                    {/* Theme Toggle */}
-                    <button onClick={() => { playSound('click'); toggleTheme(); }} className={styles.themeToggle} title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}>
+                    <button
+                        onClick={() => {
+                            playSound('click');
+                            toggleTheme();
+                        }}
+                        className={styles.themeToggle}
+                        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                    >
                         {theme === 'light' ? (
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
                             </svg>
                         ) : (
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                                <circle cx="12" cy="12" r="5" />
+                                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
                             </svg>
                         )}
                     </button>
                 </header>
 
-                <main className={styles.main}>
-                    {children}
-                </main>
+                <main className={styles.main}>{children}</main>
 
                 <footer className={styles.footer}>
-                    <p>
-                        <span className={styles.footerBrand}>WhatIF</span>
-                        <span className={styles.footerDivider}>•</span>
-                        Experience the future before you choose it
-                    </p>
+                    <div className={styles.footerInner}>
+                        <div className={styles.footerLead}>
+                            <span className={styles.footerBrand}>WhatIF</span>
+                            <span className={styles.footerTag}>Cognitive timeline simulator</span>
+                        </div>
+                        <p className={styles.footerCopy}>
+                            Explore branching futures, compare trade-offs, and pressure-test your choices before you commit.
+                        </p>
+                        <div className={styles.footerMeta}>
+                            <span>Powered by Gemini</span>
+                            <span className={styles.footerDivider}>|</span>
+                            <span>Built for bold decisions</span>
+                        </div>
+                    </div>
                 </footer>
             </div>
         </div>
