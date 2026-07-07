@@ -15,7 +15,7 @@ interface AuthState {
     // Actions
     login: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
     register: (email: string, password: string, name?: string) => Promise<void>;
-    guestLogin: () => Promise<void>;
+    guestLogin: (name?: string) => Promise<void>;
     logout: () => void;
     fetchProfile: () => Promise<void>;
     updateProfile: (data: Partial<User>) => Promise<void>;
@@ -79,16 +79,13 @@ export const useAuthStore = create<AuthState>()(
                 }
             },
 
-            guestLogin: async () => {
+            guestLogin: async (name?: string) => {
                 set({ isLoading: true, error: null });
 
-                // Reuse a still-valid guest token from a previous session, so
-                // repeated "Try as guest" clicks (e.g. after logging out and
-                // coming back) don't spawn redundant guest rows. The token is
-                // only sig-verified by the server; the local check just gates
-                // whether it's worth trying.
+                // Reuse a still-valid guest token from a previous session, but ONLY if
+                // no custom guest name is being requested.
                 const cachedGuestToken = localStorage.getItem(GUEST_TOKEN_KEY);
-                if (isGuestTokenValid(cachedGuestToken)) {
+                if (!name && isGuestTokenValid(cachedGuestToken)) {
                     api.setToken(cachedGuestToken);
                     set({ token: cachedGuestToken });
                     try {
@@ -107,10 +104,15 @@ export const useAuthStore = create<AuthState>()(
                     localStorage.removeItem(GUEST_TOKEN_KEY);
                     api.setToken(null);
                     set({ token: null, user: null });
+                } else if (name) {
+                    // Wiping old guest credentials if user wants to log in with a new name
+                    localStorage.removeItem(GUEST_TOKEN_KEY);
+                    api.setToken(null);
+                    set({ token: null, user: null });
                 }
 
                 try {
-                    const response = await api.guestLogin();
+                    const response = await api.guestLogin(name);
                     if (response.data) {
                         api.setToken(response.data.token);
                         localStorage.setItem(GUEST_TOKEN_KEY, response.data.token);

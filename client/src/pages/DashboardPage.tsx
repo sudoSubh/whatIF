@@ -4,6 +4,7 @@ import { useDecisionStore } from '../stores/decisionStore';
 import { useAuthStore } from '../stores/authStore';
 import { useSound } from '../context/SoundContext';
 import { getPreferredModel } from '../lib/modelPreference';
+import api from '../services/api';
 import AccuracyDashboard from '../components/timeline/AccuracyDashboard';
 import type { DecisionContext } from '../types';
 import styles from './DashboardPage.module.css';
@@ -76,6 +77,79 @@ export default function DashboardPage() {
     const { user } = useAuthStore();
     const { playSound } = useSound();
     const navigate = useNavigate();
+
+    const [isParsing, setIsParsing] = useState(false);
+    const [parsingSuccess, setParsingSuccess] = useState<string | null>(null);
+    const [parsingError, setParsingError] = useState<string | null>(null);
+    const [dragActive, setDragActive] = useState(false);
+
+    const handleDrag = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.type === "dragenter" || e.type === "dragover") {
+            setDragActive(true);
+        } else if (e.type === "dragleave") {
+            setDragActive(false);
+        }
+    };
+
+    const handleDrop = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragActive(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            await processFile(e.dataTransfer.files[0]);
+        }
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            await processFile(e.target.files[0]);
+        }
+    };
+
+    const processFile = async (file: File) => {
+        setIsParsing(true);
+        setParsingError(null);
+        setParsingSuccess(null);
+        playSound('click');
+
+        const reader = new FileReader();
+        reader.onload = async () => {
+            try {
+                const base64 = reader.result as string;
+                const response = await api.parseDocument(base64, file.type, getPreferredModel());
+                if (response.success && response.data) {
+                    const parsed = response.data;
+                    setDecision(parsed.decision);
+                    if (parsed.category) {
+                        setCategory(parsed.category);
+                    }
+                    if (parsed.context) {
+                        setContext(prev => ({
+                            ...prev,
+                            ...parsed.context
+                        }));
+                    }
+                    setShowAdvanced(true);
+                    setParsingSuccess(`Successfully parsed: "${file.name}"`);
+                    playSound('received');
+                } else {
+                    setParsingError("Failed to extract details from document.");
+                }
+            } catch (err) {
+                setParsingError(err instanceof Error ? err.message : "Error analyzing file.");
+            } finally {
+                setIsParsing(false);
+            }
+        };
+        reader.onerror = () => {
+            setParsingError("Error reading file.");
+            setIsParsing(false);
+        };
+        reader.readAsDataURL(file);
+    };
 
     // Clear any existing decision when entering dashboard (fresh start)
     useEffect(() => {
@@ -165,6 +239,52 @@ export default function DashboardPage() {
                             disabled={isGenerating}
                             rows={4}
                         />
+
+                        {/* AI Document Parser Zone */}
+                        <div className={styles.parserSection}>
+                            {isParsing ? (
+                                <div className={styles.parserLoader}>
+                                    <span className={styles.spinner}></span>
+                                    <span>AI is reading your document and extracting decision context...</span>
+                                </div>
+                            ) : (
+                                <div 
+                                    className={`${styles.dropZone} ${dragActive ? styles.dropZoneActive : ''}`}
+                                    onDragEnter={handleDrag}
+                                    onDragOver={handleDrag}
+                                    onDragLeave={handleDrag}
+                                    onDrop={handleDrop}
+                                    onClick={() => document.getElementById('parser-file-input')?.click()}
+                                >
+                                    <input 
+                                        type="file"
+                                        id="parser-file-input"
+                                        className={styles.fileInput}
+                                        accept="image/*,application/pdf"
+                                        onChange={handleFileChange}
+                                    />
+                                    <div className={styles.parserTitle}>
+                                        <span className={styles.parserIcon}>✨</span>
+                                        <span>AI Document Parser</span>
+                                    </div>
+                                    <p className={styles.dropZoneText}>
+                                        Drag & drop a <strong>PDF offer letter, lease, bank statement, or screenshot</strong> here, or click to browse.
+                                    </p>
+                                </div>
+                            )}
+
+                            {parsingSuccess && (
+                                <div className={styles.parserSuccess}>
+                                    {parsingSuccess}
+                                </div>
+                            )}
+
+                            {parsingError && (
+                                <div className={styles.error} style={{ marginTop: 'var(--space-2)' }}>
+                                    ⚠️ {parsingError}
+                                </div>
+                            )}
+                        </div>
 
                         <div className={styles.contextSummary}>
                             <span className={styles.contextPill}>

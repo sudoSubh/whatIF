@@ -82,8 +82,11 @@ class ApiClient {
         });
     }
 
-    async guestLogin(): Promise<ApiResponse<AuthResponse>> {
-        return this.request('/auth/guest', { method: 'POST' });
+    async guestLogin(name?: string): Promise<ApiResponse<AuthResponse>> {
+        return this.request('/auth/guest', {
+            method: 'POST',
+            body: name ? JSON.stringify({ name }) : undefined,
+        });
     }
 
     async forgotPassword(email: string): Promise<ApiResponse<{ message: string; resetToken?: string }>> {
@@ -142,6 +145,21 @@ class ApiClient {
         return this.request(`/decisions/${decisionId}/inject`, {
             method: 'POST',
             body: JSON.stringify({ timelineId, newDecision, preferredModel }),
+        });
+    }
+
+    async parseDocument(
+        fileData: string,
+        mimeType: string,
+        preferredModel?: PreferredModel
+    ): Promise<ApiResponse<{
+        decision: string;
+        category: 'career' | 'finance' | 'relationships' | 'health' | 'education' | 'lifestyle' | 'other';
+        context: Record<string, string>;
+    }>> {
+        return this.request('/decisions/parse-document', {
+            method: 'POST',
+            body: JSON.stringify({ fileData, mimeType, preferredModel }),
         });
     }
 

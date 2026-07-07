@@ -5,6 +5,7 @@ import { useSound } from '../context/SoundContext';
 import { getPreferredModel } from '../lib/modelPreference';
 import TimelineCard from '../components/timeline/TimelineCard';
 import TimelineComparison from '../components/timeline/TimelineComparison';
+import DecisionTree from '../components/timeline/DecisionTree';
 import type { DecisionContext, Timeline } from '../types';
 import styles from './DecisionPage.module.css';
 
@@ -15,6 +16,14 @@ const RETHINKING_MESSAGES = [
     '⚡ Processing new timelines...',
     '🔮 Exploring alternate futures...',
     '📊 Recalculating probabilities...',
+];
+
+const TIMELINE_COLORS = [
+    'var(--timeline-color-1)',
+    'var(--timeline-color-2)',
+    'var(--timeline-color-3)',
+    'var(--timeline-color-4)',
+    'var(--timeline-color-5)',
 ];
 
 function InjectThinkingIndicator() {
@@ -83,13 +92,26 @@ export default function DecisionPage() {
     const handleTimelineSelect = (timelineId: string) => {
         playSound('click');
         setSelectedTimelines(prev => {
-            if (prev.includes(timelineId)) {
-                return prev.filter(t => t !== timelineId);
+            const isAlreadySelected = prev.includes(timelineId);
+            let nextSelection;
+            if (isAlreadySelected) {
+                nextSelection = prev.filter(t => t !== timelineId);
+            } else if (prev.length < 3) {
+                nextSelection = [...prev, timelineId];
+            } else {
+                nextSelection = prev;
             }
-            if (prev.length < 3) {
-                return [...prev, timelineId];
+
+            // Sync branching target (selectedForInject)
+            if (!isAlreadySelected) {
+                setSelectedForInject(timelineId);
+                setInjectMode(true);
+            } else if (selectedForInject === timelineId) {
+                const remaining = nextSelection.filter(t => t !== timelineId);
+                setSelectedForInject(remaining.length > 0 ? remaining[remaining.length - 1] : null);
             }
-            return prev;
+
+            return nextSelection;
         });
     };
 
@@ -133,6 +155,10 @@ export default function DecisionPage() {
     const contextEntries = Object.entries((currentDecision?.context ?? {}) as DecisionContext).filter(([, value]) =>
         typeof value === 'string' ? value.trim().length > 0 : Boolean(value)
     );
+
+    const selectedTimeline = currentDecision?.timelines?.find(t => t.id === selectedForInject);
+    const selectedTimelineIndex = currentDecision?.timelines && selectedTimeline ? currentDecision.timelines.indexOf(selectedTimeline) : -1;
+    const selectedTimelineColor = selectedTimelineIndex !== -1 ? TIMELINE_COLORS[selectedTimelineIndex % TIMELINE_COLORS.length] : 'transparent';
 
     if (isLoading) {
         return (
@@ -218,45 +244,37 @@ export default function DecisionPage() {
                 </section>
             )}
 
-            {currentDecision.branches && currentDecision.branches.length > 0 && (
-                <section
-                    aria-label="Branched decisions"
-                    style={{
-                        margin: '1rem 0 1.5rem',
-                        padding: '1rem',
-                        border: '1px solid rgba(99,102,241,0.25)',
-                        borderRadius: '12px',
-                        background: 'rgba(99,102,241,0.04)',
-                    }}
-                >
-                    <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.7, marginBottom: '0.5rem' }}>
-                        Branches from this decision ({currentDecision.branches.length})
-                    </div>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        {currentDecision.branches.map((b) => (
-                            <li key={b.id}>
-                                <button
-                                    type="button"
-                                    onClick={() => { playSound('click'); navigate(`/decision/${b.id}`); }}
-                                    style={{
-                                        width: '100%',
-                                        textAlign: 'left',
-                                        background: 'transparent',
-                                        border: '1px solid rgba(99,102,241,0.25)',
-                                        color: 'inherit',
-                                        padding: '0.6rem 0.75rem',
-                                        borderRadius: '8px',
-                                        font: 'inherit',
-                                        cursor: 'pointer',
-                                    }}
-                                >
-                                    → {b.content}
-                                </button>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            )}
+            <DecisionTree
+                decision={currentDecision}
+                timelines={currentDecision.timelines || []}
+                branches={currentDecision.branches || []}
+                parent={currentDecision.parent || null}
+                selectedTimelineForFollowUp={selectedForInject}
+                onSelectTimelineForFollowUp={(timelineId) => {
+                    playSound('click');
+                    setSelectedForInject(timelineId);
+                    setInjectMode(true);
+                    
+                    // Also select it for comparison if not already selected
+                    setSelectedTimelines(prev => {
+                        if (!prev.includes(timelineId)) {
+                            if (prev.length < 3) {
+                                return [...prev, timelineId];
+                            } else {
+                                return [...prev.slice(1), timelineId];
+                            }
+                        }
+                        return prev;
+                    });
+
+                    setTimeout(() => {
+                        const injectPanelElement = document.getElementById('inject-panel');
+                        if (injectPanelElement) {
+                            injectPanelElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 100);
+                }}
+            />
 
             {/* Actions Bar */}
             <div className={styles.actions}>
@@ -282,32 +300,46 @@ export default function DecisionPage() {
                 </div>
             </div>
 
-            {/* Inject Decision Panel by prateek*/}
             {injectMode && (
-                <div className={styles.injectPanel}>
+                <div id="inject-panel" className={styles.injectPanel}>
                     <h3>What's your follow-up decision?</h3>
                     <p>Select a timeline and add a new decision to see how it affects the future.</p>
 
                     <div className={styles.injectForm}>
-                        <select
-                            className="input"
-                            value={selectedForInject || ''}
-                            onChange={(e) => { playSound('click'); setSelectedForInject(e.target.value); }}
-                            disabled={isGenerating}
-                        >
-                            <option value="">Select a timeline to branch from...</option>
-                            {currentDecision.timelines?.map(t => (
-                                <option key={t.id} value={t.id}>{t.title}</option>
-                            ))}
-                        </select>
+                        {selectedTimeline ? (
+                            <div 
+                                className={styles.selectedTimelineBadge} 
+                                style={{ '--timeline-color': selectedTimelineColor } as React.CSSProperties}
+                            >
+                                <span className={styles.badgeIndicator}></span>
+                                <span className={styles.badgeText}>
+                                    Branching from: <strong>{selectedTimeline.title}</strong>
+                                </span>
+                                <button
+                                    type="button"
+                                    className={styles.clearSelectionBtn}
+                                    onClick={() => { playSound('click'); setSelectedForInject(null); }}
+                                    title="Select a different timeline"
+                                >
+                                    ✕ Clear Selection
+                                </button>
+                            </div>
+                        ) : (
+                            <div className={styles.selectPrompt}>
+                                <span className={styles.promptIcon}>☝️</span>
+                                <span className={styles.promptText}>
+                                    Please select a timeline from the <strong>Branching Simulation Map</strong> above to branch from.
+                                </span>
+                            </div>
+                        )}
 
                         <textarea
                             className="input textarea"
-                            placeholder="What if I also..."
+                            placeholder={selectedTimeline ? "What if I also..." : "Please select a timeline from the map above to start typing..."}
                             value={newDecision}
                             onChange={(e) => setNewDecision(e.target.value)}
                             onKeyDown={handleInjectKeyDown}
-                            disabled={isGenerating}
+                            disabled={isGenerating || !selectedForInject}
                             rows={3}
                         />
 

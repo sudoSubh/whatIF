@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { Timeline } from '../../types';
+import RadarChart from './RadarChart';
 import styles from './TimelineComparison.module.css';
 
 interface TimelineComparisonProps {
@@ -53,6 +54,9 @@ export default function TimelineComparison({ timelines, onClose }: TimelineCompa
                 </header>
 
                 <div className={styles.content}>
+                    {/* Radar Chart Visual Comparison */}
+                    <RadarChart timelines={timelines} />
+
                     {/* Timeline Headers */}
                     <div className={styles.row}>
                         <div className={styles.label}></div>

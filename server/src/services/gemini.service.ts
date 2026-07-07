@@ -157,7 +157,7 @@ Be specific, realistic, and insightful. Avoid generic advice.`;
 
 // Helper function to try a model with fallback
 async function tryModelWithFallback(
-    contents: string,
+    contents: string | unknown[],
     config: { temperature: number; topP?: number; maxOutputTokens: number; responseMimeType?: string },
     preferredModel?: PreferredModel
 ): Promise<string> {
@@ -175,7 +175,7 @@ async function tryModelWithFallback(
         try {
             if (isDev) console.log(`Trying Gemini model: ${model}`);
             const response = await withTimeout(
-                ai.models.generateContent({ model, contents, config }),
+                ai.models.generateContent({ model, contents: contents as any, config }),
                 GEMINI_TIMEOUT_MS,
                 `Gemini (${model})`,
             );
@@ -497,5 +497,103 @@ Return ONLY valid JSON matching this exact schema:
         if (error instanceof AppError) throw error;
         if (error instanceof SyntaxError) throw new AppError('Failed to parse AI response', 502);
         throw new AppError('Failed to regenerate events based on reality', 502);
+    }
+}
+
+// ---- Document Context Parser (Multimodal) ---------------------------------
+
+const ParsedDocumentContextSchema = z.object({
+    decision: z.string().min(5),
+    category: z.enum(['career', 'finance', 'relationships', 'health', 'education', 'lifestyle', 'other']),
+    context: z.object({
+        timeHorizon: z.enum(['6 months', '1 year', '2 years', '5 years', '10 years']).optional(),
+        deadline: z.string().optional(),
+        budgetRange: z.string().optional(),
+        currentStability: z.enum(['Very stable', 'Mostly stable', 'In transition', 'High uncertainty']).optional(),
+        biggestFear: z.string().optional(),
+        bestCaseGoal: z.string().optional(),
+        peopleImpacted: z.string().optional(),
+        hardConstraints: z.string().optional(),
+        successLooksLike: z.string().optional(),
+    }),
+});
+
+export type ParsedDocumentContext = z.infer<typeof ParsedDocumentContextSchema>;
+
+export async function parseDocumentContext(
+    fileBase64: string,
+    mimeType: string,
+    preferredModel?: PreferredModel
+): Promise<ParsedDocumentContext> {
+    if (!ai) {
+        throw new AppError('AI service not configured - please set GEMINI_API_KEY', 500);
+    }
+
+    const systemPrompt = `You are a professional life consultant and cognitive scientist. Your task is to analyze the uploaded document (which could be a job offer letter, house lease agreement, financial statement, business proposal, or personal handwritten notes) and extract context for a decision simulation.
+
+You must output a structured JSON object containing:
+1. "decision": A short summary of the decision the user needs to make (e.g., "Should I accept the offer at X company as a Software Engineer?").
+2. "category": The most appropriate category (choose from: "career", "finance", "relationships", "health", "education", "lifestyle", "other").
+3. "context": An object containing any details you can find in the document for the following fields:
+   - "timeHorizon": Choose the most likely timeframe for this decision (e.g., "1 year", "2 years", "5 years", "10 years").
+   - "deadline": Any date or period by which this decision must be made.
+   - "budgetRange": Any financial amounts, compensation details, or budget limits mentioned.
+   - "currentStability": Assess the user's situation if mentioned, or leave out.
+   - "biggestFear": What downside, penalty, or concern is raised in the document.
+   - "bestCaseGoal": The best-case positive outcome described or implied.
+   - "peopleImpacted": Any people, family, or team members mentioned.
+   - "hardConstraints": Hard rules like visa limits, relocation requirements, notice periods, contract terms.
+   - "successLooksLike": Performance metrics or target states.
+
+Provide details ONLY if you can extract or infer them from the document. Do not invent details not supported by the text/image.`;
+
+    const contents = [
+        {
+            inlineData: {
+                data: fileBase64,
+                mimeType: mimeType,
+            }
+        },
+        systemPrompt
+    ];
+
+    try {
+        const text = await tryModelWithFallback(
+            contents,
+            {
+                temperature: 0.2,
+                maxOutputTokens: 2048,
+                responseMimeType: 'application/json',
+            },
+            preferredModel
+        );
+
+        let jsonStr = text.trim();
+        const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+            jsonStr = codeBlockMatch[1].trim();
+        }
+
+        if (!jsonStr.startsWith('{')) {
+            const jsonObjectMatch = text.match(/(\{[\s\S]*\})/);
+            if (jsonObjectMatch) {
+                jsonStr = jsonObjectMatch[1].trim();
+            }
+        }
+
+        const raw = JSON.parse(jsonStr) as unknown;
+        const parsed = ParsedDocumentContextSchema.safeParse(raw);
+        if (!parsed.success) {
+            if (isDev) console.error('Parsed document extraction failed schema validation:', parsed.error.issues);
+            throw new AppError('AI response extraction failed validation', 502);
+        }
+        return parsed.data;
+    } catch (error) {
+        if (isDev) console.error('Gemini document parse error:', error);
+        if (error instanceof AppError) throw error;
+        if (error instanceof SyntaxError) {
+            throw new AppError('Failed to parse AI document extraction response', 502);
+        }
+        throw new AppError('Failed to parse document context', 502);
     }
 }

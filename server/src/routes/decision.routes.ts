@@ -8,6 +8,7 @@ import {
     getUserDecisions,
     injectDecision
 } from '../services/decision.service.js';
+import { parseDocumentContext } from '../services/gemini.service.js';
 import { AppError } from '../middleware/error.middleware.js';
 
 export const decisionRouter = Router();
@@ -94,6 +95,33 @@ decisionRouter.post('/:id/inject', decisionWriteLimiter, async (req: AuthRequest
             data.preferredModel
         );
         res.status(201).json({ success: true, data: result });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            next(new AppError(error.errors[0].message, 400));
+        } else {
+            next(error);
+        }
+    }
+});
+
+const parseDocumentSchema = z.object({
+    fileData: z.string().min(1, 'File data cannot be empty'),
+    mimeType: z.string().min(1, 'Mime type cannot be empty'),
+    preferredModel: preferredModelSchema.optional(),
+});
+
+// Parse document to extract decision context
+decisionRouter.post('/parse-document', decisionWriteLimiter, async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+        const data = parseDocumentSchema.parse(req.body);
+        
+        let cleanBase64 = data.fileData;
+        if (cleanBase64.includes(';base64,')) {
+            cleanBase64 = cleanBase64.split(';base64,')[1];
+        }
+
+        const result = await parseDocumentContext(cleanBase64, data.mimeType, data.preferredModel);
+        res.json({ success: true, data: result });
     } catch (error) {
         if (error instanceof z.ZodError) {
             next(new AppError(error.errors[0].message, 400));

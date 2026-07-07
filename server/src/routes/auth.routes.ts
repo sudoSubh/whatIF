@@ -92,9 +92,10 @@ authRouter.post('/forgot-password', async (req, res: Response, next: NextFunctio
 
 // Create an anonymous, throwaway guest account for the demo / "try it out"
 // flow. Short-lived token, real User row marked isGuest=true.
-authRouter.post('/guest', guestLimiter, async (_req, res: Response, next: NextFunction) => {
+authRouter.post('/guest', guestLimiter, async (req, res: Response, next: NextFunction) => {
     try {
-        const result = await createGuest();
+        const name = req.body?.name;
+        const result = await createGuest(name);
         res.status(201).json({ success: true, data: result });
     } catch (error) {
         next(error);

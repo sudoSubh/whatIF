@@ -261,7 +261,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
 const GUEST_TOKEN_TTL = '60m';
 const GUEST_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
-export async function createGuest(): Promise<AuthResponse> {
+export async function createGuest(name?: string): Promise<AuthResponse> {
     // Synthetic, unique, .local-suffixed email so it can't collide with a
     // real address and can't be used to phish.
     const id = crypto.randomBytes(8).toString('hex');
@@ -276,7 +276,7 @@ export async function createGuest(): Promise<AuthResponse> {
         data: {
             email,
             passwordHash,
-            name: `Guest ${id.slice(0, 6)}`,
+            name: name?.trim() || `Guest ${id.slice(0, 6)}`,
             isGuest: true,
         },
         select: { id: true, email: true, name: true },

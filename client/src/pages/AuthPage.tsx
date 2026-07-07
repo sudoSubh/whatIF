@@ -41,9 +41,19 @@ export default function AuthPage() {
 
     const { login, register, guestLogin, isLoading, error, clearError } = useAuthStore();
 
-    const handleGuestLogin = async () => {
+    const [showGuestModal, setShowGuestModal] = useState(false);
+    const [guestName, setGuestName] = useState('');
+
+    const handleTryAsGuestClick = () => {
+        setShowGuestModal(true);
+        setGuestName('');
+    };
+
+    const handleGuestLoginSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        setShowGuestModal(false);
         try {
-            await guestLogin();
+            await guestLogin(guestName.trim() || undefined);
             navigate('/dashboard');
         } catch {
             // Error surfaced via store
@@ -421,7 +431,7 @@ export default function AuthPage() {
                                 <div className={styles.guestDivider} aria-hidden="true">or</div>
                                 <button
                                     type="button"
-                                    onClick={handleGuestLogin}
+                                    onClick={handleTryAsGuestClick}
                                     disabled={loading}
                                     className={styles.guestBtn}
                                     aria-label="Try the app as a guest without signing up"
@@ -458,6 +468,42 @@ export default function AuthPage() {
                     </div>
                 </div>
             </div>
+            {showGuestModal && (
+                <div className={styles.modalOverlay} onClick={() => setShowGuestModal(false)}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                        <h3 className={styles.modalTitle}>Enter your name</h3>
+                        <p className={styles.modalDescription}>
+                            Please enter your name to customize your guest session.
+                        </p>
+                        <form onSubmit={handleGuestLoginSubmit} className={styles.modalForm}>
+                            <input
+                                type="text"
+                                className="input"
+                                placeholder="Your name (e.g. Alex)"
+                                value={guestName}
+                                onChange={(e) => setGuestName(e.target.value)}
+                                maxLength={30}
+                                autoFocus
+                            />
+                            <div className={styles.modalButtons}>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowGuestModal(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                >
+                                    Continue
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

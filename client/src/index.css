@@ -34,9 +34,9 @@
   --color-border-hover: rgba(147, 197, 253, 0.3);
 
   /* Timeline Colors */
-  --timeline-color-1: #4f8cff;
-  --timeline-color-2: #7c6cff;
-  --timeline-color-3: #ff5fa2;
+  --timeline-color-1: #00b4d8; /* Vibrant Cyan */
+  --timeline-color-2: #f97316; /* Vibrant Orange */
+  --timeline-color-3: #d946ef; /* Vivid Magenta */
   --timeline-color-4: #f59e0b;
   --timeline-color-5: #14b8a6;
 
@@ -298,6 +298,11 @@ a:hover {
   color: var(--color-text-primary);
   transition: all var(--transition-fast);
   font-weight: 600;
+}
+
+.input option {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
 }
 
 .input:focus {

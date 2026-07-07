@@ -93,6 +93,9 @@ app.use(cors({
     maxAge: 86_400,
 }));
 
+// High limit specifically for the document parser endpoint to receive base64 payloads
+app.post('/api/v1/decisions/parse-document', express.json({ limit: '10mb' }));
+
 app.use(express.json({ limit: '10kb' }));
 
 // ===========================================

@@ -1,0 +1,107 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    margin-bottom: var(--space-6);
+    backdrop-filter: blur(10px);
+}
+
+.title {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: var(--space-4);
+    color: var(--color-text-primary);
+    text-align: center;
+}
+
+.chartWrapper {
+    position: relative;
+    width: 320px;
+    height: 320px;
+}
+
+.radarSvg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+/* Grid styles */
+.gridLine {
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+    fill: none;
+}
+
+:global(:root:not(.dark)) .gridLine {
+    stroke: rgba(15, 23, 42, 0.08);
+}
+
+.axisLine {
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 1.2;
+}
+
+:global(:root:not(.dark)) .axisLine {
+    stroke: rgba(15, 23, 42, 0.12);
+}
+
+.axisLabel {
+    font-size: 0.7rem;
+    font-weight: 700;
+    fill: var(--color-text-secondary);
+    text-anchor: middle;
+    font-family: var(--font-sans);
+}
+
+/* Data series */
+.seriesPolygon {
+    stroke-width: 2.5;
+    fill-opacity: 0.22;
+    transition: all 0.3s ease;
+}
+
+.seriesPolygon:hover {
+    fill-opacity: 0.45;
+    stroke-width: 3.5;
+}
+
+.dataPoint {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.dataPoint:hover {
+    r: 6;
+}
+
+/* Legend styling */
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+    width: 100%;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+
+.legendColor {
+    width: 12px;
+    height: 12px;
+    border-radius: var(--radius-full);
+}

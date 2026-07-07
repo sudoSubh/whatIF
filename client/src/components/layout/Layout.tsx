@@ -18,6 +18,83 @@ const GEMINI_MODELS: Array<{ id: PreferredModel; name: string; description: stri
     { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', description: 'Stable & reliable' },
 ];
 
+// Helper to summarize prompts client-side to 4-5 descriptive words
+function getShortSummary(content: string, category?: string): string {
+    const text = content.toLowerCase();
+    const hasDoubt = text.includes('doubt') || text.includes('confused') || text.includes('sure') || text.includes('should i') || text.includes('choose') || text.includes('what if');
+    const hasMistake = text.includes('mistake') || text.includes('regret') || text.includes('wrong') || text.includes('bad') || text.includes('mess');
+
+    // 1. Career / Job keyword matches
+    if (text.includes('job') || text.includes('offer') || text.includes('salary') || text.includes('lpa') || text.includes('ctc') || text.includes('promotion') || text.includes('resign') || text.includes('company') || text.includes('work')) {
+        if (hasDoubt) {
+            return 'Job Shift Doubt';
+        }
+        if (hasMistake) {
+            return 'Career Shift Regret';
+        }
+        if (text.includes('offer')) {
+            return 'Job Offer Decision';
+        }
+        return 'Career Path Decision';
+    }
+
+    // 2. Education / Academic keyword matches
+    if (text.includes('college') || text.includes('university') || text.includes('exam') || text.includes('study') || text.includes('course') || text.includes('degree') || text.includes('academic') || text.includes('major') || text.includes('engineering') || text.includes('mba') || text.includes('mtech') || text.includes('school') || text.includes('education')) {
+        if (hasDoubt) {
+            return 'Academic Decision';
+        }
+        if (hasMistake) {
+            return 'Academic Regret Choice';
+        }
+        return 'Academic Decision';
+    }
+
+    // 3. Relationships keyword matches
+    if (text.includes('relationship') || text.includes('break') || text.includes('split') || text.includes('girlfriend') || text.includes('boyfriend') || text.includes('partner') || text.includes('marry') || text.includes('marriage') || text.includes('divorce') || text.includes('proposal') || text.includes('date') || text.includes('dating') || text.includes('love') || text.includes('propose') || text.includes('ex')) {
+        if (hasMistake) {
+            return 'Relationship Mistake';
+        }
+        if (hasDoubt) {
+            return 'Relationship Doubt Choice';
+        }
+        if (text.includes('break') || text.includes('split')) {
+            return 'Relationship Breakup Choice';
+        }
+        return 'Relationship Decision';
+    }
+
+    // 4. Financial keyword matches
+    if (text.includes('buy') || text.includes('invest') || text.includes('stock') || text.includes('crypto') || text.includes('loan') || text.includes('debt') || text.includes('car') || text.includes('house') || text.includes('flat') || text.includes('property') || text.includes('rent') || text.includes('money')) {
+        if (hasDoubt) {
+            return 'Financial Investment Doubt';
+        }
+        return 'Financial Management Choice';
+    }
+
+    // 5. Health & Wellness keyword matches
+    if (text.includes('health') || text.includes('gym') || text.includes('doctor') || text.includes('disease') || text.includes('sick') || text.includes('weight') || text.includes('diet') || text.includes('therapy') || text.includes('mental')) {
+        return 'Health & Lifestyle Choice';
+    }
+
+    // 6. Category fallback if keywords didn't trigger
+    if (category) {
+        const cat = category.toLowerCase();
+        if (cat === 'career') return 'Career Path Decision';
+        if (cat === 'finance') return 'Financial Management Choice';
+        if (cat === 'relationships' || cat === 'relationship') return 'Relationship Decision';
+        if (cat === 'health') return 'Health & Lifestyle Choice';
+        if (cat === 'education') return 'Academic Decision';
+        if (cat === 'lifestyle') return 'Personal Lifestyle Choice';
+    }
+
+    // 7. Default fallback: take the first 5 words
+    const words = content.trim().split(/\s+/);
+    if (words.length <= 5) {
+        return content;
+    }
+    return words.slice(0, 5).join(' ') + '...';
+}
+
 export default function Layout({ children }: LayoutProps) {
     const { user, logout } = useAuthStore();
     const { decisions, fetchDecisions } = useDecisionStore();
@@ -49,40 +126,6 @@ export default function Layout({ children }: LayoutProps) {
         <div className={styles.layout}>
             <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : styles.sidebarClosed}`}>
                 <div className={styles.sidebarContent}>
-                    {sidebarOpen && (
-                        <div className={styles.modelSection}>
-                            <div className={styles.modelDropdownWrapper}>
-                                <button
-                                    className={styles.modelDropdownBtn}
-                                    onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
-                                >
-                                    <span>{selectedModel.name}</span>
-                                    <span className={styles.dropdownArrow}>▾</span>
-                                </button>
-                                {modelDropdownOpen && (
-                                    <div className={styles.modelDropdown}>
-                                        {GEMINI_MODELS.map((model) => (
-                                            <button
-                                                key={model.id}
-                                                className={`${styles.modelOption} ${selectedModel.id === model.id ? styles.modelSelected : ''}`}
-                                                onClick={() => {
-                                                    playSound('click');
-                                                    setSelectedModel(model);
-                                                    setModelDropdownOpen(false);
-                                                    setPreferredModel(model.id);
-                                                }}
-                                            >
-                                                <span className={styles.modelName}>{model.name}</span>
-                                                <span className={styles.modelDesc}>{model.description}</span>
-                                                {selectedModel.id === model.id && <span className={styles.modelCheck}>✓</span>}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
                     <button
                         className={styles.newChatBtn}
                         onClick={() => {
@@ -121,14 +164,57 @@ export default function Layout({ children }: LayoutProps) {
                                         }}
                                         title={d.content}
                                     >
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                        {/* Custom branching timeline node icon */}
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                            <circle cx="18" cy="5" r="3" />
+                                            <circle cx="18" cy="19" r="3" />
+                                            <circle cx="6" cy="12" r="3" />
+                                            <path d="M9 12h3M12 12c0-3.5 1-5 3-5M12 12c0 3.5 1 5 3 5" />
                                         </svg>
-                                        <span className={styles.historyText}>{d.content.substring(0, 30)}...</span>
+                                        <span className={styles.historyText}>{getShortSummary(d.content, d.category)}</span>
                                     </button>
                                 ))}
                                 {decisions.length === 0 && (
                                     <p className={styles.historyEmpty}>No decisions yet</p>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {sidebarOpen && (
+                        <div className={styles.modelSection}>
+                            <div className={styles.modelDropdownWrapper}>
+                                <button
+                                    className={styles.modelDropdownBtn}
+                                    onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
+                                >
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--color-accent-primary)' }}>
+                                            <path d="M12 2v20M2 12h20M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3 3-7z" />
+                                        </svg>
+                                        <span>{selectedModel.name}</span>
+                                    </span>
+                                    <span className={styles.dropdownArrow}>▾</span>
+                                </button>
+                                {modelDropdownOpen && (
+                                    <div className={styles.modelDropdown}>
+                                        {GEMINI_MODELS.map((model) => (
+                                            <button
+                                                key={model.id}
+                                                className={`${styles.modelOption} ${selectedModel.id === model.id ? styles.modelSelected : ''}`}
+                                                onClick={() => {
+                                                    playSound('click');
+                                                    setSelectedModel(model);
+                                                    setModelDropdownOpen(false);
+                                                    setPreferredModel(model.id);
+                                                }}
+                                            >
+                                                <span className={styles.modelName}>{model.name}</span>
+                                                <span className={styles.modelDesc}>{model.description}</span>
+                                                {selectedModel.id === model.id && <span className={styles.modelCheck}>✓</span>}
+                                            </button>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </div>

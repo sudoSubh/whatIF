@@ -410,3 +410,85 @@
         width: 100%;
     }
 }
+
+/* AI Document Parser Styling */
+.parserSection {
+    margin-bottom: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.dropZone {
+    border: 2px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-5) var(--space-4);
+    text-align: center;
+    background: rgba(255, 255, 255, 0.01);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+.dropZone:hover {
+    border-color: var(--color-accent-primary);
+    background: rgba(79, 140, 255, 0.04);
+}
+
+.dropZoneActive {
+    border-color: var(--color-accent-secondary);
+    background: rgba(45, 212, 191, 0.08);
+}
+
+.parserTitle {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.parserIcon {
+    font-size: 1.2rem;
+}
+
+.dropZoneText {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.dropZoneText strong {
+    color: var(--color-accent-primary);
+}
+
+.fileInput {
+    display: none;
+}
+
+.parserLoader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    font-size: 0.88rem;
+    color: var(--color-accent-primary);
+    padding: var(--space-4);
+    background: rgba(79, 140, 255, 0.05);
+    border-radius: var(--radius-lg);
+    border: 1px dashed rgba(79, 140, 255, 0.2);
+}
+
+.parserSuccess {
+    padding: var(--space-3) var(--space-4);
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--color-positive);
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+}
