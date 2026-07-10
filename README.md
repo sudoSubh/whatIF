@@ -189,11 +189,3 @@ whatif/
 | `JWT_SECRET` | Secret for JWT tokens |
 | `JWT_EXPIRES_IN` | Token expiration (e.g., 7d) |
 | `GEMINI_API_KEY` | Your Gemini API key |
-
-## 📝 License
-
-Built for the Hackathon 2026 by **Prateek**
-
----
-
-*Powered by Google Gemini*
