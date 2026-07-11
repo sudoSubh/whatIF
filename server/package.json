@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "node scripts/setup-prisma-env.js && prisma generate && tsc",
     "start": "node dist/index.js",
-    "start:prod": "node scripts/setup-prisma-env.js && prisma migrate deploy && node dist/index.js",
+    "start:prod": "node scripts/setup-prisma-env.js && node dist/index.js",
     "db:generate": "node scripts/setup-prisma-env.js && prisma generate",
     "db:push": "node scripts/setup-prisma-env.js && prisma db push",
     "db:migrate": "node scripts/setup-prisma-env.js && prisma migrate dev",
