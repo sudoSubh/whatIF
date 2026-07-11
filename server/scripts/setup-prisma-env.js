@@ -1,49 +1,27 @@
 /**
  * Prisma CLI requires DIRECT_URL to be set in the environment for schema validation.
  * This script auto-constructs DIRECT_URL from SUPABASE_URL + SUPABASE_DB_PASSWORD
- * if DIRECT_URL is not already set.
+ * and exports it to the environment.
  *
  * Run this before `prisma generate` or `prisma migrate` commands.
  */
 
-import 'dotenv/config';
-import { readFileSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
-
-const envPath = resolve(import.meta.dirname, '..', '.env');
-
-// Parse current .env
-let currentEnv = {};
-try {
-  const content = readFileSync(envPath, 'utf8');
-  currentEnv = Object.fromEntries(
-    content
-      .split('\n')
-      .filter((l) => l.trim() && !l.startsWith('#'))
-      .map((l) => {
-        const [key, ...valueParts] = l.split('=');
-        return [key.trim(), valueParts.join('=').trim().replace(/^["']|["']$/g, '')];
-      })
-  );
-} catch (e) {
-  console.error('Failed to read .env file:', e.message);
-  process.exit(1);
-}
+// Read from environment variables (Render sets these via its dashboard)
+const supabaseUrl = process.env.SUPABASE_URL;
+const dbPassword = process.env.SUPABASE_DB_PASSWORD;
+const directUrlEnv = process.env.DIRECT_URL;
 
 // Skip if DIRECT_URL is already set
-if (currentEnv.DIRECT_URL) {
-  console.log('DIRECT_URL already set in .env, skipping auto-generation');
+if (directUrlEnv && directUrlEnv.length > 0) {
+  console.log('DIRECT_URL already set in environment, skipping auto-generation');
   process.exit(0);
 }
 
-// Build DIRECT_URL from SUPABASE_URL + SUPABASE_DB_PASSWORD
-const supabaseUrl = currentEnv.SUPABASE_URL;
-const dbPassword = currentEnv.SUPABASE_DB_PASSWORD;
-
 if (!supabaseUrl || !dbPassword) {
   console.error(
-    'Cannot auto-generate DIRECT_URL: SUPABASE_URL and/or SUPABASE_DB_PASSWORD not set in .env'
+    'Cannot auto-generate DIRECT_URL: SUPABASE_URL and/or SUPABASE_DB_PASSWORD not set in environment'
   );
+  console.error('Set these in Render dashboard: SUPABASE_URL, SUPABASE_DB_PASSWORD');
   process.exit(1);
 }
 
@@ -53,28 +31,17 @@ try {
   const encoded = encodeURIComponent(dbPassword);
 
   const directUrl = `postgresql://postgres:${encoded}@db.${ref}.supabase.co:5432/postgres`;
+  const databaseUrl = directUrl; // For simplicity, use direct connection
 
-  console.log(`Auto-generating DIRECT_URL from SUPABASE_URL`);
+  console.log('Auto-generating DATABASE_URL and DIRECT_URL from SUPABASE_URL + SUPABASE_DB_PASSWORD');
+  console.log(`DATABASE_URL: ${databaseUrl.substring(0, 30)}...`);
   console.log(`DIRECT_URL: ${directUrl.substring(0, 30)}...`);
 
-  // Write DIRECT_URL to .env if not present
-  const lines = content.split('\n');
-  let found = false;
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].trim().startsWith('DIRECT_URL=')) {
-      lines[i] = `DIRECT_URL=${directUrl}`;
-      found = true;
-      break;
-    }
-  }
-
-  if (!found) {
-    lines.push(`DIRECT_URL=${directUrl}`);
-  }
-
-  writeFileSync(envPath, lines.join('\n'));
-  console.log('DIRECT_URL written to .env');
+  // Export to process for immediate use (Prisma will pick these up)
+  process.env.DATABASE_URL = databaseUrl;
+  process.env.DIRECT_URL = directUrl;
+  console.log('DATABASE_URL and DIRECT_URL exported to environment');
 } catch (e) {
-  console.error('Failed to generate DIRECT_URL:', e.message);
+  console.error('Failed to generate URLs:', e.message);
   process.exit(1);
 }
