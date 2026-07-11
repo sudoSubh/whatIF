@@ -9,12 +9,13 @@ generator client {
 //   (a) point DATABASE_URL at the same Supabase project, or
 //   (b) run `docker compose up` and use the local postgres URL.
 // Supabase uses pgbouncer (port 6543) for the runtime pool, but Prisma
-// migrations need a direct connection (port 5432). DIRECT_URL is optional
-// at runtime; set it whenever you run `prisma migrate`.
+// migrations need a direct connection (port 5432). DIRECT_URL defaults to
+// DATABASE_URL if not provided; both are auto-built from SUPABASE_URL +
+// SUPABASE_DB_PASSWORD via server/src/lib/env.ts.
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  directUrl = env("DIRECT_URL", env("DATABASE_URL"))
 }
 
 model User {

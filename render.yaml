@@ -25,7 +25,7 @@ services:
       # PORT is set automatically by Render — do not override it here
 
       # -----------------------------------------------------------------------
-      # Database — Supabase Postgres (Option A: auto-build URLs from these)
+      # Database — Supabase Postgres (auto-build DATABASE_URL + DIRECT_URL)
       # -----------------------------------------------------------------------
       - key: SUPABASE_URL
         sync: false         # e.g. https://rclfqldxilejcaxpsoqz.supabase.co
@@ -63,3 +63,13 @@ services:
       # -----------------------------------------------------------------------
       - key: FRONTEND_URL
         sync: false         # e.g. https://your-app.vercel.app
+
+      # -----------------------------------------------------------------------
+      # Database URLs (auto-built from SUPABASE_URL + SUPABASE_DB_PASSWORD)
+      # Render still requires them to be present — leave blank here, env.ts
+      # will populate them. If you prefer, you can paste the full URLs instead.
+      # -----------------------------------------------------------------------
+      - key: DATABASE_URL
+        sync: false         # auto-built; blank here, populated by env.ts
+      - key: DIRECT_URL
+        sync: false         # auto-built; blank here, populated by env.ts
