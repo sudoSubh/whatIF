@@ -10,7 +10,7 @@ services:
     plan: free
     region: oregon          # change if your Supabase project is in EU/Asia
     rootDir: server
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /health
     autoDeploy: true

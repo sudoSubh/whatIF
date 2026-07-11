@@ -3,12 +3,19 @@ import { z } from 'zod';
 import { AppError } from '../middleware/error.middleware.js';
 import { env } from '../lib/env.js';
 
-const apiKey = env.GEMINI_API_KEY;
-if (!apiKey) {
+const primaryApiKey = env.GEMINI_API_KEY;
+const fallbackApiKey =
+    env.GEMINI_API_KEY_FALLBACK && env.GEMINI_API_KEY_FALLBACK !== primaryApiKey
+        ? env.GEMINI_API_KEY_FALLBACK
+        : undefined;
+
+if (!primaryApiKey && !fallbackApiKey) {
     console.warn('GEMINI_API_KEY not set - AI features will not work');
 }
 
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+const primaryAi = primaryApiKey ? new GoogleGenAI({ apiKey: primaryApiKey }) : null;
+const fallbackAi = fallbackApiKey ? new GoogleGenAI({ apiKey: fallbackApiKey }) : null;
+const isAiConfigured = Boolean(primaryAi || fallbackAi);
 
 const isDev = env.NODE_ENV === 'development';
 const GEMINI_TIMEOUT_MS = 30_000;
@@ -155,39 +162,103 @@ For each timeline, provide:
 
 Be specific, realistic, and insightful. Avoid generic advice.`;
 
-// Helper function to try a model with fallback
-async function tryModelWithFallback(
-    contents: string | unknown[],
-    config: { temperature: number; topP?: number; maxOutputTokens: number; responseMimeType?: string },
-    preferredModel?: PreferredModel
-): Promise<string> {
-    if (!ai) {
-        throw new AppError('AI service not configured - please set GEMINI_API_KEY', 500);
+function isKeyFallbackWorthy(error: unknown): boolean {
+    if (error instanceof AppError) {
+        // Timeouts are usually model latency, not key quota — don't burn the backup key.
+        return error.statusCode === 502 || error.statusCode === 503;
     }
 
-    let lastError: Error | null = null;
+    const err = error as { status?: number; code?: number | string; message?: string };
+    const status = err.status ?? (typeof err.code === 'number' ? err.code : undefined);
+    if (status === 429 || status === 401 || status === 403 || (status !== undefined && status >= 500)) {
+        return true;
+    }
 
-    const modelChain = preferredModel
-        ? [preferredModel, ...MODEL_FALLBACK_CHAIN.filter((model) => model !== preferredModel)]
-        : [...MODEL_FALLBACK_CHAIN];
+    const message = String(err.message ?? error).toLowerCase();
+    return /quota|rate.?limit|resource_exhausted|exceeded|billing|permission|api.?key|unauthorized|forbidden|overloaded|unavailable/.test(
+        message,
+    );
+}
+
+type ModelChainResult =
+    | { ok: true; text: string }
+    | { ok: false; error: Error; fallbackWorthy: boolean };
+
+async function tryModelChain(
+    ai: GoogleGenAI,
+    contents: string | unknown[],
+    config: { temperature: number; topP?: number; maxOutputTokens: number; responseMimeType?: string },
+    modelChain: readonly PreferredModel[],
+    keyLabel: 'primary' | 'fallback',
+): Promise<ModelChainResult> {
+    let lastError: Error | null = null;
+    let sawFallbackWorthyError = false;
 
     for (const model of modelChain) {
         try {
-            if (isDev) console.log(`Trying Gemini model: ${model}`);
+            if (isDev) console.log(`Trying Gemini model: ${model} (${keyLabel} key)`);
             const response = await withTimeout(
                 ai.models.generateContent({ model, contents: contents as any, config }),
                 GEMINI_TIMEOUT_MS,
                 `Gemini (${model})`,
             );
-            return response.text || '';
+            return { ok: true, text: response.text || '' };
         } catch (error) {
-            if (isDev) console.warn(`Model ${model} failed:`, (error as Error).message);
-            lastError = error as Error;
+            const err = error as Error;
+            if (isDev) console.warn(`Model ${model} failed (${keyLabel} key):`, err.message);
+            lastError = err;
+            if (isKeyFallbackWorthy(error)) {
+                sawFallbackWorthyError = true;
+            }
         }
     }
 
-    // All models failed
-    throw lastError || new AppError('All AI models failed', 500);
+    return {
+        ok: false,
+        error: lastError || new AppError('All AI models failed', 500),
+        fallbackWorthy: sawFallbackWorthyError,
+    };
+}
+
+// Try the model fallback chain on the primary key first. Only if every model
+// fails with a quota/auth/server-style error do we retry the same chain once
+// on the backup key — never per-model, to avoid exhausting its rate limit.
+async function tryModelWithFallback(
+    contents: string | unknown[],
+    config: { temperature: number; topP?: number; maxOutputTokens: number; responseMimeType?: string },
+    preferredModel?: PreferredModel
+): Promise<string> {
+    if (!isAiConfigured) {
+        throw new AppError('AI service not configured - please set GEMINI_API_KEY', 500);
+    }
+
+    const modelChain = preferredModel
+        ? [preferredModel, ...MODEL_FALLBACK_CHAIN.filter((model) => model !== preferredModel)]
+        : [...MODEL_FALLBACK_CHAIN];
+
+    if (primaryAi) {
+        const primaryResult = await tryModelChain(primaryAi, contents, config, modelChain, 'primary');
+        if (primaryResult.ok) {
+            return primaryResult.text;
+        }
+
+        if (fallbackAi && primaryResult.fallbackWorthy) {
+            if (isDev) console.warn('Primary Gemini API key exhausted — retrying once with fallback key');
+            const fallbackResult = await tryModelChain(fallbackAi, contents, config, modelChain, 'fallback');
+            if (fallbackResult.ok) {
+                return fallbackResult.text;
+            }
+            throw fallbackResult.error;
+        }
+
+        throw primaryResult.error;
+    }
+
+    const fallbackResult = await tryModelChain(fallbackAi!, contents, config, modelChain, 'fallback');
+    if (fallbackResult.ok) {
+        return fallbackResult.text;
+    }
+    throw fallbackResult.error;
 }
 
 export async function generateTimelines(
@@ -197,7 +268,7 @@ export async function generateTimelines(
     decisionContext?: DecisionContextInput,
     preferredModel?: PreferredModel
 ): Promise<TimelineGenerationResult> {
-    if (!ai) {
+    if (!isAiConfigured) {
         throw new AppError('AI service not configured - please set GEMINI_API_KEY', 500);
     }
 
@@ -336,7 +407,7 @@ export async function regenerateTimelineWithDecision(
     existingTimeline: GeneratedTimeline,
     userProfile: UserProfile
 ): Promise<GeneratedTimeline> {
-    if (!ai) {
+    if (!isAiConfigured) {
         throw new AppError('AI service not configured', 500);
     }
 
@@ -414,7 +485,7 @@ export async function correctTimelineEvents(
     subsequentEvents: { period: string; description: string; impact: string }[],
     userProfile: UserProfile
 ): Promise<RegeneratedEvent[]> {
-    if (!ai) {
+    if (!isAiConfigured) {
         throw new AppError('AI service not configured', 500);
     }
 
@@ -525,7 +596,7 @@ export async function parseDocumentContext(
     mimeType: string,
     preferredModel?: PreferredModel
 ): Promise<ParsedDocumentContext> {
-    if (!ai) {
+    if (!isAiConfigured) {
         throw new AppError('AI service not configured - please set GEMINI_API_KEY', 500);
     }
 
