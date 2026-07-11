@@ -65,11 +65,8 @@ services:
         sync: false         # e.g. https://your-app.vercel.app
 
       # -----------------------------------------------------------------------
-      # Database URLs (auto-built from SUPABASE_URL + SUPABASE_DB_PASSWORD)
-      # Render still requires them to be present — leave blank here, env.ts
-      # will populate them. If you prefer, you can paste the full URLs instead.
+      # Database URLs (auto-built by scripts/setup-prisma-env.js from SUPABASE_URL + SUPABASE_DB_PASSWORD)
       # -----------------------------------------------------------------------
       - key: DATABASE_URL
-        sync: false         # auto-built; blank here, populated by env.ts
-      - key: DIRECT_URL
-        sync: false         # auto-built; blank here, populated by env.ts
+        sync: false         # auto-built; leave blank
+      # DIRECT_URL is auto-built by scripts/setup-prisma-env.js and written to .env before prisma commands

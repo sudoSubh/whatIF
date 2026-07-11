@@ -5,15 +5,15 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && tsc",
+    "build": "node scripts/setup-prisma-env.js && prisma generate && tsc",
     "start": "node dist/index.js",
-    "start:prod": "prisma migrate deploy && node dist/index.js",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
+    "start:prod": "node scripts/setup-prisma-env.js && prisma migrate deploy && node dist/index.js",
+    "db:generate": "node scripts/setup-prisma-env.js && prisma generate",
+    "db:push": "node scripts/setup-prisma-env.js && prisma db push",
+    "db:migrate": "node scripts/setup-prisma-env.js && prisma migrate dev",
+    "db:deploy": "node scripts/setup-prisma-env.js && prisma migrate deploy",
     "db:studio": "prisma studio",
-    "postinstall": "prisma generate",
+    "postinstall": "node scripts/setup-prisma-env.js && prisma generate",
     "test": "vitest"
   },
   "dependencies": {
