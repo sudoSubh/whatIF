@@ -9,9 +9,8 @@ services:
     runtime: node
     plan: free
     region: oregon          # change to match your Supabase project region
-    rootDir: server
-    buildCommand: npm ci --include=dev && npm run build
-    startCommand: npm run start:prod
+    buildCommand: cd server && npm ci --include=dev && npm run build
+    startCommand: cd server && npm run start:prod
     healthCheckPath: /health
     autoDeploy: true
     envVars:
