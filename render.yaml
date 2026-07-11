@@ -25,7 +25,7 @@ services:
       # PORT is set automatically by Render — do not override it here
 
       # -----------------------------------------------------------------------
-      # Database — Supabase Postgres (auto-build DATABASE_URL + DIRECT_URL)
+      # Database — Supabase Postgres
       # -----------------------------------------------------------------------
       - key: SUPABASE_URL
         sync: false         # e.g. https://rclfqldxilejcaxpsoqz.supabase.co
@@ -43,6 +43,17 @@ services:
         sync: false
       - key: SUPABASE_JWKS_URL
         sync: false
+
+      # -----------------------------------------------------------------------
+      # Database Connection URLs (REQUIRED by Prisma)
+      # Both DATABASE_URL and DIRECT_URL must be set.
+      # Use: postgresql://postgres:<PASSWORD>@db.<REF>.supabase.co:5432/postgres
+      # Example: postgresql://postgres:IwSQ4GHzCCb1rEiB@db.rclfqldxilejcaxpsoqz.supabase.co:5432/postgres
+      # -----------------------------------------------------------------------
+      - key: DATABASE_URL
+        sync: false         # Prisma runtime connection (direct or pooled)
+      - key: DIRECT_URL
+        sync: false         # Prisma migration connection (must be direct, port 5432)
 
       # -----------------------------------------------------------------------
       # JWT — token signing
@@ -63,10 +74,3 @@ services:
       # -----------------------------------------------------------------------
       - key: FRONTEND_URL
         sync: false         # e.g. https://your-app.vercel.app
-
-      # -----------------------------------------------------------------------
-      # Database URLs (auto-built by scripts/setup-prisma-env.js from SUPABASE_URL + SUPABASE_DB_PASSWORD)
-      # -----------------------------------------------------------------------
-      - key: DATABASE_URL
-        sync: false         # auto-built; leave blank
-      # DIRECT_URL is auto-built by scripts/setup-prisma-env.js and written to .env before prisma commands
