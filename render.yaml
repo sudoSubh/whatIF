@@ -1,32 +1,74 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 # Connect this repo at https://dashboard.render.com/blueprints, then fill in
-# the env vars marked `sync: false` in the dashboard (Render won't read them
-# from this file for security).
+# the env vars marked `sync: false` in the Render dashboard (Render won't
+# read secret values from this file for security reasons).
 
 services:
   - type: web
     name: whatif-api
     runtime: node
     plan: free
-    region: oregon          # change if your Supabase project is in EU/Asia
+    region: oregon          # change to match your Supabase project region
     rootDir: server
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /health
     autoDeploy: true
     envVars:
+      # -----------------------------------------------------------------------
+      # Static / non-secret values — committed here, safe to be public
+      # -----------------------------------------------------------------------
       - key: NODE_ENV
         value: production
       - key: JWT_EXPIRES_IN
         value: 15m
-      # Secrets (set these manually in the Render dashboard):
-      - key: JWT_SECRET
-        sync: false
+      # PORT is set automatically by Render — do not override it here
+
+      # -----------------------------------------------------------------------
+      # Database — Supabase Postgres
+      # Set ONE of the two options below in the Render dashboard:
+      #
+      # Option A (recommended): set SUPABASE_URL + SUPABASE_DB_PASSWORD and
+      #   optionally SUPABASE_REGION. The server builds DATABASE_URL /
+      #   DIRECT_URL automatically from these three values.
+      #
+      # Option B: paste the full connection strings directly:
+      #   DATABASE_URL — pooled (port 6543, pgbouncer=true&connection_limit=1)
+      #   DIRECT_URL   — direct (port 5432), required by prisma migrate deploy
+      # -----------------------------------------------------------------------
+      - key: SUPABASE_URL
+        sync: false         # e.g. https://<ref>.supabase.co
+      - key: SUPABASE_DB_PASSWORD
+        sync: false         # Project Settings → Database → password
+      - key: SUPABASE_REGION
+        sync: false         # e.g. ap-south-1 | us-east-1 | eu-west-1
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false         # Supabase anon/publishable key (optional)
+      - key: SUPABASE_SECRET_KEY
+        sync: false         # Supabase service-role secret key (optional)
+      - key: SUPABASE_JWKS_URL
+        sync: false         # optional — only if you verify Supabase JWTs
       - key: DATABASE_URL
-        sync: false
+        sync: false         # Option B: pooled URL (leave blank if using Option A)
       - key: DIRECT_URL
-        sync: false
+        sync: false         # Option B: direct URL (leave blank if using Option A)
+
+      # -----------------------------------------------------------------------
+      # JWT
+      # -----------------------------------------------------------------------
+      - key: JWT_SECRET
+        sync: false         # >= 32 random chars; generate with: node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+
+      # -----------------------------------------------------------------------
+      # Gemini AI
+      # -----------------------------------------------------------------------
       - key: GEMINI_API_KEY
-        sync: false
+        sync: false         # https://aistudio.google.com/apikey
+      - key: GEMINI_API_KEY_FALLBACK
+        sync: false         # optional secondary key for quota failover
+
+      # -----------------------------------------------------------------------
+      # CORS — your deployed Vercel/client URL
+      # -----------------------------------------------------------------------
       - key: FRONTEND_URL
-        sync: false
+        sync: false         # e.g. https://your-app.vercel.app
