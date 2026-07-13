@@ -10,7 +10,7 @@ services:
     plan: free
     region: oregon          # change to match your Supabase project region
     rootDir: server
-    buildCommand: npm ci --include=dev && npm run build && test -f dist/index.js && echo "Build successful: dist/index.js exists"
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /health
     autoDeploy: true
